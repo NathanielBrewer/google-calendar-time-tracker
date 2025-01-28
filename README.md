@@ -1,14 +1,12 @@
-# Google Apps Script Rollup Build
-
-Develop modular JavaScript with `import` and `export` statements, NPM packages, and `dev` and `prod` targets. Build to a `code.gs` file that is executable in your Google Apps Script project.
+# Google Calendar Time Tracker
 
 ### Installation and commands
 
 1. **Clone the repository** 
 
    ```bash
-   git clone https://github.com/NathanielBrewer/gas-rollup-build.git
-   cd gas-rollup-build
+   git clone https://github.com/NathanielBrewer/google-calendar-time-tracker.git
+   cd google-calendar-time-tracker
    ```
 
 2. **Install dependencies**
@@ -35,16 +33,15 @@ Develop modular JavaScript with `import` and `export` statements, NPM packages, 
 
     Command:
     ```bash
-    npm run build:<target>
+    npm run build:<prod|dev>
     ```
-    where the "target" is either `prod` or `dev`
 
 6. **Push**
 
     Invoke `clasp push` for either the `prod` or `dev` script ID
   
     ```bash
-    npm run push:<target>
+    npm run push:<prod|dev>
     ```
 
 7. **Deploy**
@@ -52,7 +49,7 @@ Develop modular JavaScript with `import` and `export` statements, NPM packages, 
     Invoke `clasp deploy` for either the `prod` or `dev` script ID
   
     ```bash
-    npm run deploy:<target>
+    npm run deploy:<prod|dev>
     ```
 
 8. **Reload**
@@ -60,6 +57,5 @@ Develop modular JavaScript with `import` and `export` statements, NPM packages, 
     For faster development, build and push in one command
 
     ```bash
-    npm run reload:<target>
+    npm run reload:<prod|dev>
     ```
-    where the "target" is either `prod` or `dev`
