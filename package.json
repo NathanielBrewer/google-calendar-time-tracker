@@ -1,11 +1,13 @@
 {
-  "name": "gas-rollup-build",
+  "name": "google-calendar-time-tracker",
   "version": "1.0.0",
-  "description": "A Rollup project configrured for use Google Apps Script development using Clasp. It allows you to develop for Google Apps Script while modern JS practices and then to build to a single `code.gs` file that is ready for deployment to your Google Apps Script project.",
+  "description": "",
   "main": "code.js",
   "scripts": {
     "build:dev": "NODE_ENV=dev rollup -c && NODE_ENV=dev node ./build/adjustClasp.js",
     "build:prod": "NODE_ENV=prod rollup -c && NODE_ENV=prod node ./build/adjustClasp.js",
+    "pull:dev": "cd ./dist/dev && clasp pull",
+    "pull:prod": "cd ./dist/prod && clasp pull",
     "push:dev": "cd ./dist/dev && clasp push",
     "push:prod": "cd ./dist/prod && clasp push",
     "deploy:dev": "cd ./dist/dev && clasp deploy",
@@ -15,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NathanielBrewer/gas-rollup-build.git"
+    "url": ""
   },
   "keywords": [
     "Google",
@@ -28,9 +30,9 @@
   "author": "nathanielc.brewer@gmail.com",
   "license": "See licence in LICENCE",
   "bugs": {
-    "url": "https://github.com/NathanielBrewer/gas-rollup-build/issues"
+    "url": ""
   },
-  "homepage": "https://github.com/NathanielBrewer/gas-rollup-build#readme",
+  "homepage": "",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^26.0.1",
     "@rollup/plugin-html": "^1.0.3",
