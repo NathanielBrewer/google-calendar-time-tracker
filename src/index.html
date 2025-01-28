@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<head>
+  <base target="_top">
+  <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
+  <style>
+    .app-form{
+      max-height: 600px;
+      height: 600px;
+      overflow-y: scroll;
+    }
+    ul {
+      list-style-type: none;
+      margin-left: 0;
+      padding-left: 0;
+      li {
+        input {
+          width: 100%;
+        }
+        padding-bottom: .75rem;
+      }
+      :last-child {
+        padding-bottom: 0;
+      }
+    }
+    .submit-button {
+      margin-top: .75rem;
+    }
+
+    .font-style-italic {
+      font-style: italic;
+    }
+    .error-message {
+      color: red;
+    }
+    .progress-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: rgba(50, 50, 50, .85);
+      color: #f3f3f3;
+    }
+    .progress-spinner {
+      border: 6px solid #f3f3f3; /* Light grey border */
+      border-top: 6px solid #3498db; /* Blue border */
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .display-none {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div>
+    <form class="app-form" name="appForm">
+      <fieldset>
+        <legend>Form</legend>
+        <ul>
+          <li>
+            <label for="uploadFile">Select
+              <span id="errorElement" class="error"></span>
+            </label>
+          </li>
+        </ul>
+      </fieldset>
+    </form>
+    <button class="submit-button action" onclick="onSubmit()">
+      Submit
+    </button>
+    <div id="progressContainer" class="progress-container">
+      <div class="progress-spinner"></div>
+      <p id="progressText">Loading</p>
+      <p id="progressAmount"></p>
+    </div>
+  </div>
+  <script>
+    google.script.run
+      .withSuccessHandler(function(token) {
+        if(token == 'Access Denied') {
+          alert("You do not have the necessary permissions to upload file.");
+        } else {
+          _accessToken = token;
+        }
+      })
+      .withFailureHandler(function(error) {
+        onUploadFailure(error);
+        console.error(`#google.script.run.getOAuthToken()
+        Error: ${JSON.stringify(error)}`);
+      })
+      .getOAuthToken();
+
+    google.script.run
+      .withSuccessHandler(async function(data) {
+        await setup(data);
+        hideElement(_progressContainerElement);
+      })
+      .withFailureHandler(function(error) {
+        hideElement(_progressContainerElement);
+        resetProgressContainerChildren();
+        presentError(error);
+        const message = `Error setting up.
+        ${error.message}`;
+        onUploadFailure(error.message);
+        console.error(`#google.script.run.getSetupData()
+          error${JSON.stringify(error)}`
+        );
+      })
+      .getSetupData();
+
+    let _accessToken = null;
+    let _file = null;
+    let _setupData = {};
+    
+    let _activeErrorMessageElements = [];
+    const _progressAmountElement = document.getElementById('progressAmount');
+    const _progressTextElement = document.getElementById('progressText');
+    const _progressContainerElement = document.getElementById('progressContainer');
+    const _progressSpinnerElement = document.getElementById('progressSpinner');
+
+    function registerEventListeners() {
+    
+    }
+
+    function resetProgressContainerChildren() {
+      setProgressText('Uploading');
+      setProgressAmount(0);
+      showElement(_progressAmountElement);
+      showElement(_progressTextElement);
+      showElement(_progressSpinnerElement);
+    }
+
+    function hideElement(element) {
+      if(element) {
+        element.classList.add('display-none');
+      }
+    }
+
+    function setProgressText(text) {
+      _progressTextElement.innerText = text;
+    }
+
+    function setProgressAmount(number) {
+      _progressAmountElement.innerText =`${number}%`;
+    }
+
+    function showElement(element) {
+      if(element && element.classList.contains('display-none')) {
+        element.classList.remove('display-none');
+      }
+    }
+
+    async function setup(data) {
+      _setupData = data;
+      registerEventListeners();
+    }
+
+    async function onSubmit() {
+      validateForm();
+      if(computeIsFormValid()) {
+        showElement(_progressSpinnerElement);
+        showElement(_progressContainerElement);
+        setProgressText('Working');
+        // TODO: Do the work
+      }
+    }
+
+    function validateForm() {
+      _activeErrorMessageElements.forEach((errorElement) => {
+        errorElement.innerText = '';
+      });
+      _activeErrorMessageElements = [];
+      // TODO: Validate form. If there are errors, get their elements (make sure their `innerText` attributes are set correctly) and push them into the arr
+    }
+
+    function computeIsFormValid() {
+      return _activeErrorMessageElements.length === 0;
+    }
+
+    async function run() {
+      try {
+
+      } catch (error) {
+        const message = `#run()
+        Error: ${error.message}`;
+        console.error(`#run()
+        Error: ${JSON.stringify(error)}`);
+        onFailure(message);
+      }
+    }
+
+    function onSuccess() {
+      hideElement(_progressSpinnerElement);
+      hideElement(_progressAmountElement);
+      setProgressText('Success');
+
+      google.script.run
+        .withSuccessHandler(function() {
+          google.script.host.close();
+        })
+        .withFailureHandler(function(error) {
+          hideElement(_progressSpinnerElement);
+          hideElement(_progressAmountElement);
+          const message = `onSuccess() error: ${error.message}`;
+          presentError(message);
+          console.error(`#onSuccess()
+            Error: ${JSON.stringify(error)}`
+          );
+        })
+        .onSuccess();
+    }
+
+    function presentError(message) {
+      alert(message + "\n" + " Please try again. If the error persists, please contact the developer nathanielc.brewer@gmail.com");
+    }
+
+    function onFailure(errorMessage) {
+      hideElement(_progressContainerElement);
+      resetProgressContainerChildren();
+      presentError(errorMessage);
+
+      google.script.run
+        .withSuccessHandler(function() {
+        })
+        .withFailureHandler(function(error) {
+          const message = `File upload failed. 
+          [onUploadSuccess(linkToFile) error] error: ${error.message}`;
+          presentError(message);
+          console.error(message);        
+        })
+        .onFailure();
+    }
+  </script>
+</body>

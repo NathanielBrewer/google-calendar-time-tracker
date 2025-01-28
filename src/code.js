@@ -151,3 +151,23 @@ function arrayOfObjectsToCSV(arr) {
   .join('\n') 
   .replace(/(^\[)|(\]$)/mg, '');
 }
+
+function getOAuthToken() {
+  try {
+    return ScriptApp.getOAuthToken();
+  } catch (e) {
+    console.error(`#getOAuthToken()
+      authorization error Failed with error: ${JSON.stringify(e)}`);
+  }
+}
+
+function showWindow() {
+  const htmlOutput = HtmlService.createHtmlOutputFromFile('index.html')
+    .setWidth(600)
+    .setHeight(700)
+  return htmlOutput
+}
+
+function doGet(event) {
+  return showWindow()
+}
