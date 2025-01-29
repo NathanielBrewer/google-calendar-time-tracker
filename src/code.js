@@ -23,8 +23,8 @@ function createAppEvents(dateRange, appEvents) {
     print: function () {
       return `
         SUMMARY:
-        Start: ${getFormatedDate(new Date(this.range.start))},
-        End: ${getFormatedDate(new Date(this.range.end))},
+        Start date: ${getFormatedDate(new Date(this.range.start))}, 12:00 AM,
+        End date: ${getFormatedDate(new Date(this.range.end))}, 11:59 PM),
         Total hours: ${this.hours()}
 
         EVENTS: ${this.appEvents.map((appEvent) => appEvent.print()).join("\n")}
@@ -52,8 +52,7 @@ function createAppEvent(event) {
   }
 }
 
-function getAppEventsForRanges() {
-  let calendar = getCalendarByName(CALENDAR_NAME);
+function getAppEventsForRanges(calendar = getCalendarByName(), dateRanges = _dateRanges) {
   if(!calendar) {
     console.error('Error: Calendar not found', CALENDAR_NAME);
     return;
@@ -76,10 +75,18 @@ function calculateTotalHoursForRangeWithInterval() {
     end: new Date("2025-01-23T23:59:59-04:00").getTime()
   };
   const interval = hoursToMs(24);
-  dateRanges = getRangesForInterval(dateRange, interval);
+  _dateRanges = getRangesForInterval(dateRange, interval);
   const appEventsForRanges = getAppEventsForRanges();
   const appEvents = createAppEvents(dateRange, appEventsForRanges)
   Logger.log(`appEvents: ${appEvents.print()}`);
+}
+
+function client_computeResults(calendarId, dateRange) {
+  const calendar = CalendarApp.getCalendarById(calendarId);
+  const interval = hoursToMs(24);
+  const dateRanges = getRangesForInterval(dateRange, interval);
+  const appEventsForRanges = getAppEventsForRanges(calendar, dateRanges);
+  return createAppEvents(dateRange, appEventsForRanges).print();
 }
 
 const CALENDAR_NAME = "New Brunswick Plants";
@@ -124,7 +131,7 @@ function getNumDaysInRange(dateRange) {
   return getNumDaysFromHours(getNumHoursInRange(dateRange));
 }
 
-var dateRanges = [
+var _dateRanges = [
   {
     start: new Date("2024-11-14T00:00:00-04:00"),
     end: new Date("2024-11-17T23:59:59-04:00"),
@@ -155,7 +162,7 @@ function arrayOfObjectsToCSV(arr) {
   .replace(/(^\[)|(\]$)/mg, '');
 }
 
-function getOAuthToken() {
+function client_getOAuthToken() {
   try {
     return ScriptApp.getOAuthToken();
   } catch (e) {
@@ -173,4 +180,15 @@ function showWindow() {
 
 function doGet(event) {
   return showWindow()
+}
+
+async function client_getSetupData() {
+  return {
+    calendars: CalendarApp.getAllCalendars().map((calendar) => {
+      return {
+        name: calendar.getName(),
+        id: calendar.getId()
+      }
+    }),
+  }
 }

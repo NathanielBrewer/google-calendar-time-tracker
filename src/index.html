@@ -4,8 +4,6 @@
   <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
   <style>
     .app-form{
-      max-height: 600px;
-      height: 600px;
       overflow-y: scroll;
     }
     ul {
@@ -65,21 +63,35 @@
 
 <body>
   <div>
-    <form class="app-form" name="appForm">
+    <form class="app-form" name="appForm" id="appForm">
       <fieldset>
-        <legend>Form</legend>
+        <legend></legend>
         <ul>
           <li>
-            <label for="uploadFile">Select
+            <label for="calendarSelect">Google calendar
               <span id="errorElement" class="error"></span>
             </label>
+            <select name="calendars" id="calendarSelect">
+            </select>
+          </li>
+          <li>
+            <label for="">Start date (12:00 AM)</label>
+            <input type="date" id="startDate" name="startDate">
+          </li>
+          <li>
+            <label for="">End date (11:59 PM)</label>
+            <input type="date" id="endData" name="endDate">
           </li>
         </ul>
       </fieldset>
     </form>
     <button class="submit-button action" onclick="onSubmit()">
-      Submit
+      Get tracking summary and events
     </button>
+    <section>
+      <h1>Tracking summary and events</h1>
+      <p id="results"></p>
+    </section>
     <div id="progressContainer" class="progress-container">
       <div class="progress-spinner"></div>
       <p id="progressText">Loading</p>
@@ -93,18 +105,34 @@
           alert("You do not have the necessary permissions to upload file.");
         } else {
           _accessToken = token;
+          onAuthSuccess()
         }
       })
       .withFailureHandler(function(error) {
-        onUploadFailure(error);
+        onSuccess(error);
         console.error(`#google.script.run.getOAuthToken()
         Error: ${JSON.stringify(error)}`);
       })
-      .getOAuthToken();
+      .client_getOAuthToken();
 
-    google.script.run
+    let _accessToken = null;
+    let _calendarOptions;
+    
+    let _activeErrorMessageElements = [];
+    const _progressAmountElement = document.getElementById('progressAmount');
+    const _progressTextElement = document.getElementById('progressText');
+    const _progressContainerElement = document.getElementById('progressContainer');
+    const _progressSpinnerElement = document.getElementById('progressSpinner');
+    const _form = document.getElementById('appForm')
+
+    function registerEventListeners() {
+    
+    }
+
+    function onAuthSuccess() {
+      google.script.run
       .withSuccessHandler(async function(data) {
-        await setup(data);
+        setup(data);
         hideElement(_progressContainerElement);
       })
       .withFailureHandler(function(error) {
@@ -113,25 +141,12 @@
         presentError(error);
         const message = `Error setting up.
         ${error.message}`;
-        onUploadFailure(error.message);
+        onSuccess(error.message);
         console.error(`#google.script.run.getSetupData()
           error${JSON.stringify(error)}`
         );
       })
-      .getSetupData();
-
-    let _accessToken = null;
-    let _file = null;
-    let _setupData = {};
-    
-    let _activeErrorMessageElements = [];
-    const _progressAmountElement = document.getElementById('progressAmount');
-    const _progressTextElement = document.getElementById('progressText');
-    const _progressContainerElement = document.getElementById('progressContainer');
-    const _progressSpinnerElement = document.getElementById('progressSpinner');
-
-    function registerEventListeners() {
-    
+      .client_getSetupData();
     }
 
     function resetProgressContainerChildren() {
@@ -162,19 +177,36 @@
       }
     }
 
-    async function setup(data) {
-      _setupData = data;
-      registerEventListeners();
+    function setup(data) {
+      if(!data.calendars) {
+        console.error(`#setup(data=${JSON.stringify(data)})
+          Error. calendars data is required for setup
+        `);
+      }
+      _calendarOptions = new CalendarOptions(data.calendars);
+      setupDatePickers()
+      // registerEventListeners();
     }
 
-    async function onSubmit() {
+    function setupDatePickers() {
+      const startDateElement = document.getElementById('startDate');
+      const endDataElement = document.getElementById('endDate');
+      [startDate, endData].forEach((element) => {
+        const timeString = new Date(Date.now()).toISOString().split('T')[0];
+        element.value = timeString;
+        element.max = timeString;
+      });
+    }
+
+    function onSubmit() {
       validateForm();
       if(computeIsFormValid()) {
         showElement(_progressSpinnerElement);
         showElement(_progressContainerElement);
         setProgressText('Working');
-        // TODO: Do the work
+        run()
       }
+
     }
 
     function validateForm() {
@@ -191,7 +223,30 @@
 
     async function run() {
       try {
-
+        google.script.run
+          .withSuccessHandler(async function(results) {
+            showResults(results);
+            hideElement(_progressContainerElement);
+          })
+          .withFailureHandler(function(error) {
+            hideElement(_progressContainerElement);
+            resetProgressContainerChildren();
+            presentError(error);
+            const message = `Error setting up.
+            ${error.message}`;
+            onSuccess(error.message);
+            console.error(`#google.script.run.client_computeResults()
+              error${JSON.stringify(error)}`
+            );
+          })
+          .client_computeResults(
+            _form.calendars.value,
+            {
+              // use `replace` to get to yyyy/mm/dd format so there is no UTC converstion before setting hours
+              start: new Date(_form.startDate.value.replace('-', '/')).setHours(0, 0, 1),
+              end: new Date(_form.endDate.value.replace('-', '/')).setHours(11, 59, 59)
+            }
+          );
       } catch (error) {
         const message = `#run()
         Error: ${error.message}`;
@@ -201,25 +256,20 @@
       }
     }
 
+    function showResults(results) {
+      document.getElementById('results').innerText = results;
+    }
+
     function onSuccess() {
       hideElement(_progressSpinnerElement);
       hideElement(_progressAmountElement);
       setProgressText('Success');
+    }
 
-      google.script.run
-        .withSuccessHandler(function() {
-          google.script.host.close();
-        })
-        .withFailureHandler(function(error) {
-          hideElement(_progressSpinnerElement);
-          hideElement(_progressAmountElement);
-          const message = `onSuccess() error: ${error.message}`;
-          presentError(message);
-          console.error(`#onSuccess()
-            Error: ${JSON.stringify(error)}`
-          );
-        })
-        .onSuccess();
+    function onFailure() {
+      hideElement(_progressSpinnerElement);
+      hideElement(_progressAmountElement);
+      setProgressText('Failure');
     }
 
     function presentError(message) {
@@ -241,6 +291,26 @@
           console.error(message);        
         })
         .onFailure();
+    }
+
+    class CalendarOptions {
+      constructor(calendars, config) {
+        console.log('CalendarOptions', calendars)
+        this.config = config;
+        this.calendars = calendars;
+        this.currentCalendar = undefined;
+        this.calendarSelectElement = document.getElementById('calendarSelect');
+        calendars
+          .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
+          .forEach((calendar, index) => {
+            this.calendarSelectElement.add(new Option(calendar.name, calendar.id, (index === 0)));
+          })
+        console.log('calendarSelectElement', this.calendarSelectElement)
+      }
+
+      getValue() {
+        return this.calendarElementElement.value;
+      }
     }
   </script>
 </body>
