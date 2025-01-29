@@ -6,6 +6,11 @@
     .app-form{
       overflow-y: scroll;
     }
+
+    .date-picker {
+      width: 15ch;
+    }
+
     ul {
       list-style-type: none;
       margin-left: 0;
@@ -20,6 +25,7 @@
         padding-bottom: 0;
       }
     }
+
     .submit-button {
       margin-top: .75rem;
     }
@@ -27,9 +33,11 @@
     .font-style-italic {
       font-style: italic;
     }
+
     .error-message {
       color: red;
     }
+
     .progress-container {
       display: flex;
       justify-content: center;
@@ -43,6 +51,7 @@
       background: rgba(50, 50, 50, .85);
       color: #f3f3f3;
     }
+
     .progress-spinner {
       border: 6px solid #f3f3f3; /* Light grey border */
       border-top: 6px solid #3498db; /* Blue border */
@@ -51,10 +60,12 @@
       height: 40px;
       animation: spin 1s linear infinite;
     }
+
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+
     .display-none {
       display: none;
     }
@@ -75,12 +86,12 @@
             </select>
           </li>
           <li>
-            <label for="">Start date (12:00 AM)</label>
-            <input type="date" id="startDate" name="startDate">
+            <label for="startDate">Start date (12:00 AM)</label>
+            <input class="date-picker" type="date" id="startDate" name="startDate">
           </li>
           <li>
-            <label for="">End date (11:59 PM)</label>
-            <input type="date" id="endData" name="endDate">
+            <label for="endDate">End date (11:59 PM)</label>
+            <input class="date-picker" type="date" id="endData" name="endDate">
           </li>
         </ul>
       </fieldset>
