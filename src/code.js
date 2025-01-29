@@ -1,12 +1,13 @@
-// TODO: add a check for "not billable" in the description
-const dateFormatOptions = {
-  weekday: "long",
-  month: "short",
-  day: "numeric",
-};
-
-function getFormatedDate(date) {
-  return date.toLocaleDateString("en-US", dateFormatOptions)
+function getFormatedDateTime(date) {
+  const dateFormatOptions = {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+  };
+  const timeFormatOptions = {
+    timeStyle: 'short',
+  }
+  return `${date.toLocaleDateString('en-US', dateFormatOptions)}, ${date.toLocaleTimeString('en-US', timeFormatOptions)}`
 };
 
 function createAppEvents(dateRange, appEvents) {
@@ -21,14 +22,13 @@ function createAppEvents(dateRange, appEvents) {
     },
     appEvents: appEvents,
     print: function () {
-      return `
-        SUMMARY:
-        Start date: ${getFormatedDate(new Date(this.range.start))}, 12:00 AM,
-        End date: ${getFormatedDate(new Date(this.range.end))}, 11:59 PM),
+      return `SUMMARY:
+        Start date: ${getFormatedDateTime(new Date(this.range.start))}
+        End date: ${getFormatedDateTime(new Date(this.range.end))}
         Total hours: ${this.hours()}
 
-        EVENTS: ${this.appEvents.map((appEvent) => appEvent.print()).join("\n")}
-      `;
+        EVENTS: 
+        ${this.appEvents.map((appEvent) => appEvent.print()).join("\n")}`;
     },
   };
 }
@@ -41,8 +41,7 @@ function createAppEvent(event) {
     hours: getHours(),
     event: event,
     print: () => {
-      return `
-        Date: ${getFormatedDate(new Date(event.getStartTime()))}
+      return `Date: ${getFormatedDateTime(new Date(event.getStartTime()))}
         Hours: ${getHours()}
         Title: ${event.getTitle()}
         Start: ${new Date(event.getStartTime()).toLocaleTimeString()}
