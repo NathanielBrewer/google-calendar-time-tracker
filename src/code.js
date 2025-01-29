@@ -60,7 +60,10 @@ function getAppEventsForRanges() {
   }
   return dateRanges.map((dateRange) => {
     return calendar.getEvents(dateRange.start, dateRange.end)
-      .filter((event) => !(event.getDescription().includes('not billable') || event.getDescription().includes('Not billable')))
+      .filter((event) => {
+        return !(event.getDescription().includes('not billable') || event.getDescription().includes('Not billable'))
+          && !(event.getDescription().includes("don't track") || event.getDescription().includes("Don't track"))
+      })
       .map((event) => {
       return createAppEvent(event)
     });
