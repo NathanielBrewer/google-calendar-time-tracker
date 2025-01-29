@@ -255,7 +255,7 @@
             {
               // use `replace` to get to yyyy/mm/dd format so there is no UTC converstion before setting hours
               start: new Date(_form.startDate.value.replace('-', '/')).setHours(0, 0, 1),
-              end: new Date(_form.endDate.value.replace('-', '/')).setHours(11, 59, 59)
+              end: new Date(_form.endDate.value.replace('-', '/')).setHours(23, 59, 59)
             }
           );
       } catch (error) {
