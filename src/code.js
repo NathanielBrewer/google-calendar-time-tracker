@@ -4,11 +4,16 @@ function getFormatedDateTime(date) {
     month: 'short',
     day: 'numeric',
   };
+
+  return `${date.toLocaleDateString('en-US', dateFormatOptions)}, ${getFormatedTime(date)}`
+};
+
+function getFormatedTime(date) {
   const timeFormatOptions = {
     timeStyle: 'short',
   }
-  return `${date.toLocaleDateString('en-US', dateFormatOptions)}, ${date.toLocaleTimeString('en-US', timeFormatOptions)}`
-};
+  return `${date.toLocaleTimeString('en-US', timeFormatOptions)}`
+}
 
 function createAppEvents(dateRange, appEvents) {
   return {
@@ -44,8 +49,8 @@ function createAppEvent(event) {
       return `Date: ${getFormatedDateTime(new Date(event.getStartTime()))}
         Hours: ${getHours()}
         Title: ${event.getTitle()}
-        Start: ${new Date(event.getStartTime()).toLocaleTimeString()}
-        End: ${new Date(event.getEndTime()).toLocaleTimeString()}
+        Start: ${getFormatedTime(new Date(event.getStartTime()))}
+        End: ${getFormatedTime(new Date(event.getEndTime()))}
       `
     },
   }
