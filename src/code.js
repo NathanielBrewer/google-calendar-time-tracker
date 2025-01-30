@@ -15,7 +15,7 @@ function getFormatedTime(date) {
   return `${date.toLocaleTimeString('en-US', timeFormatOptions)}`
 }
 
-function createAppEvents(dateRange, appEvents) {
+function createAppEvents(dateRange, appEvents, calendarName) {
   return {
     range: dateRange,
     hours: function () {
@@ -28,6 +28,7 @@ function createAppEvents(dateRange, appEvents) {
     appEvents: appEvents,
     print: function () {
       return `SUMMARY:
+        Calendar name: ${calendarName}
         Start date: ${getFormatedDateTime(new Date(this.range.start))}
         End date: ${getFormatedDateTime(new Date(this.range.end))}
         Total hours: ${this.hours()}
@@ -90,7 +91,7 @@ function client_computeResults(calendarId, dateRange) {
   const interval = hoursToMs(24);
   const dateRanges = getRangesForInterval(dateRange, interval);
   const appEventsForRanges = getAppEventsForRanges(calendar, dateRanges);
-  return createAppEvents(dateRange, appEventsForRanges).print();
+  return createAppEvents(dateRange, appEventsForRanges, calendar.getName()).print();
 }
 
 const CALENDAR_NAME = "New Brunswick Plants";
