@@ -172,8 +172,9 @@ function client_getOAuthToken() {
   try {
     return ScriptApp.getOAuthToken();
   } catch (e) {
-    console.error(`#getOAuthToken()
-      authorization error Failed with error: ${JSON.stringify(e)}`);
+    throw new Error(`#getOAuthToken()
+      authorization error Failed with error: ${JSON.stringify(e)}
+    `);
   }
 }
 
