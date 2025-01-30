@@ -57,11 +57,7 @@ function createAppEvent(event) {
   }
 }
 
-function getAppEventsForRanges(calendar = getCalendarByName(), dateRanges = _dateRanges) {
-  if(!calendar) {
-    console.error('Error: Calendar not found', CALENDAR_NAME);
-    return;
-  }
+function getAppEventsForRanges(calendar, dateRanges = _dateRanges) {
   return dateRanges.map((dateRange) => {
     return calendar.getEvents(dateRange.start, dateRange.end)
       .filter((event) => {
@@ -88,6 +84,11 @@ function calculateTotalHoursForRangeWithInterval() {
 
 function client_computeResults(calendarId, dateRange) {
   const calendar = CalendarApp.getCalendarById(calendarId);
+  if(!calendar) {
+    throw new Error(`#client_computeResults(calendarId=${calendarId}, dateRange=${dateRange})
+      Calendar not found error
+    `);
+  }
   const interval = hoursToMs(24);
   const dateRanges = getRangesForInterval(dateRange, interval);
   const appEventsForRanges = getAppEventsForRanges(calendar, dateRanges);
