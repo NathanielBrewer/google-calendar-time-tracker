@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <head>
+  <title>Google Calendar Time Tacker</title>
   <base target="_top">
   <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
   <style>
-    .app-form{
-      overflow-y: scroll;
-    }
-
     .date-picker {
       width: 15ch;
     }
@@ -69,12 +66,29 @@
     .display-none {
       display: none;
     }
+
+    .info-circle {
+      border: 2px solid #1967d2;
+      /* background: #e8f0fe; */
+      color: #1967d2;
+      border-radius: 50%;
+      width: 1rem;
+      height: 1rem;
+      text-align: center;
+      cursor: default;
+      font-weight: bold;
+    }
+
+    .remember-calendar {
+      display: inline-flex;
+      column-gap: .5rem;
+    }
   </style>
 </head>
 
 <body>
   <div>
-    <form class="app-form" name="appForm" id="appForm">
+    <form name="appForm" id="appForm">
       <fieldset>
         <legend></legend>
         <ul>
@@ -82,8 +96,13 @@
             <label for="calendarSelect">Google calendar
               <span id="errorElement" class="error"></span>
             </label>
-            <select name="calendars" id="calendarSelect">
+            <select name="calendars" id="calendarSelect" onchange="handleCalendarChange()">
             </select>
+          </li>
+          <li class="remember-calendar">
+            <label for="rememberCalendarCheckbox">Remember calendar choice</label>
+            <input id="rememberCalendarCheckbox" type="checkbox" onchange="handleRememberCalendarChange(event)" />
+            <div title="Save the calendar and autofill it next time" class="info-circle blue">i</div>
           </li>
           <li>
             <label for="startDate">Start date (12:00 AM)</label>
@@ -100,7 +119,7 @@
       Get tracking summary and events
     </button>
     <section>
-      <h1>Tracking summary and events</h1>
+      <h2>Tracking summary and events</h1>
       <p id="results"></p>
     </section>
     <div id="progressContainer" class="progress-container">
@@ -128,6 +147,7 @@
 
     let _accessToken = null;
     let _calendarOptions;
+    const LOCAL_STORAGE_CALENDAR_PREFIX = 'gctt_';
     
     let _activeErrorMessageElements = [];
     const _progressAmountElement = document.getElementById('progressAmount');
@@ -138,6 +158,68 @@
 
     function registerEventListeners() {
     
+    }
+
+    function setupRememberCalendar() {
+      if(computeIsCalendarInLocalStorage()) {
+        setIsCheckedForElementWithId('rememberCalendarCheckbox', computeIsKeyInLocalStorage(`${LOCAL_STORAGE_CALENDAR_PREFIX}appCalendarData`));
+      }
+    }
+
+    function setIsCheckedForElementWithId(id, checked) {
+      if(!id || id.length === 0) {
+        throw new Error(`#getCheckedForElementWithId(id=${id})
+        Missing required param error. Param 'id' is required`);
+      }
+      const element = document.getElementById(id)
+      if(!element) {
+        throw new Error(`#getCheckedForElementWithId(id=${id})
+        Element not found error. Element with \`id\` not found`);
+      }
+      return element.checked = checked;
+    }
+
+    function handleCalendarChange(event) {
+      console.log('onchange')
+      if(getCheckedForElementWithId('rememberCalendarCheckbox')) {
+        window.localStorage.setItem(
+          `${LOCAL_STORAGE_CALENDAR_PREFIX}appCalendarData`, _calendarOptions.getValue())
+      }
+    }
+
+    function getCheckedForElementWithId(id) {
+      if(!id || id.length === 0) {
+        throw new Error(`#getCheckedForElementWithId(id=${id})
+        Missing required param error. Param 'id' is required`);
+      }
+      const element = document.getElementById(id)
+      if(!element) {
+        throw new Error(`#getCheckedForElementWithId(id=${id})
+        Element not found error. Element with \`id\` not found`);
+      }
+      return element.checked;
+    }
+
+    function computeIsKeyInLocalStorage(key) {
+      if(!key || key.length === 0) {
+        throw new Error(`#isKeyInLocalStorage(key=${key})
+        Missing required param error. Param 'key' is required`);
+      }
+      return !!window.localStorage.getItem(key);
+    }
+
+    function computeIsCalendarInLocalStorage() {
+      return computeIsKeyInLocalStorage(`${LOCAL_STORAGE_CALENDAR_PREFIX}appCalendarData`);
+    }
+
+    function handleRememberCalendarChange(event) {
+      // TODO: check localStorage to see if we are remembering
+      const localStorageKey = `${LOCAL_STORAGE_CALENDAR_PREFIX}appCalendarData`;
+      if(computeIsCalendarInLocalStorage()) {
+        window.localStorage.removeItem(localStorageKey);
+        return;
+      }
+      window.localStorage.setItem(localStorageKey, _calendarOptions.getValue());
     }
 
     function onAuthSuccess() {
@@ -195,6 +277,13 @@
         `);
       }
       _calendarOptions = new CalendarOptions(data.calendars);
+      setupRememberCalendar()
+      if(computeIsCalendarInLocalStorage()) {
+        const localStorageCalendarId = window.localStorage.getItem(`${LOCAL_STORAGE_CALENDAR_PREFIX}appCalendarData`);
+        if(_calendarOptions.computeHasCalendar(localStorageCalendarId)) {
+          _calendarOptions.setValue(localStorageCalendarId);
+        }
+      }
       setupDatePickers()
       // registerEventListeners();
     }
@@ -226,6 +315,11 @@
       });
       _activeErrorMessageElements = [];
       // TODO: Validate form. If there are errors, get their elements (make sure their `innerText` attributes are set correctly) and push them into the arr
+      const startDate = new Date(_form.startDate.value)
+      const endDate = new Date(_form.endDate.value)
+      if(endDate < startDate) {
+        // TODO: handle error
+      }
     }
 
     function computeIsFormValid() {
@@ -320,8 +414,17 @@
       }
 
       getValue() {
-        return this.calendarElementElement.value;
+        return this.calendarSelectElement.value;
+      }
+
+      computeHasCalendar(id) {
+        return this.calendars.some((calendar) => (id === calendar.id)) || false;
+      }
+
+      setValue(id) {
+        this.calendarSelectElement.value = id;
       }
     }
+
   </script>
 </body>
