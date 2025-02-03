@@ -36,7 +36,7 @@
     }
 
     .error-message {
-      color: red;
+      color: var(--error-red);
     }
 
     .progress-container {
@@ -50,12 +50,12 @@
       top: 0;
       left: 0;
       background: rgba(50, 50, 50, .85);
-      color: #f3f3f3;
+      color: var(--gray--tint);
     }
 
     .progress-spinner {
-      border: 6px solid #f3f3f3; /* Light grey border */
-      border-top: 6px solid #3498db; /* Blue border */
+      border: 6px solid var(--gray--tint); /* Light grey border */
+      border-top: 6px solid var(--info-blue); /* Blue border */
       border-radius: 50%;
       width: 40px;
       height: 40px;
@@ -71,16 +71,26 @@
       display: none;
     }
 
+    body {
+      --info-blue: #1967d2;
+      --info-blue--tint: #e8f0fe;
+      --error-red: #dd4b39;
+      --gray--tint: #f3f3f3;
+      font-family: Roboto,RobotoDraft,Helvetica,Arial,sans-serif
+    }
+
     .info-circle {
-      border: 2px solid #1967d2;
+      border: 2px solid var(--info-blue);
       /* background: #e8f0fe; */
-      color: #1967d2;
+      color: var(--info-blue);
       border-radius: 50%;
       width: 1rem;
       height: 1rem;
       text-align: center;
       cursor: default;
       font-weight: bold;
+      font-size: 1rem;
+      align-self: center;
     }
 
     .remember-calendar {
