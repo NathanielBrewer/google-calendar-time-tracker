@@ -4,6 +4,10 @@
   <base target="_top">
   <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
   <style>
+    .cursor--hover-pointer:hover {
+      cursor: pointer;
+    }
+
     .date-picker {
       width: 15ch;
     }
@@ -99,26 +103,26 @@
             <label for="calendarSelect">Google calendar
               <span id="errorElement" class="error"></span>
             </label>
-            <select name="calendars" id="calendarSelect" onchange="handleCalendarChange()">
+            <select name="calendars" id="calendarSelect" onchange="handleCalendarChange()" class="cursor--hover-pointer">
             </select>
           </li>
           <li class="remember-calendar">
             <label for="rememberCalendarCheckbox">Remember calendar choice</label>
-            <input id="rememberCalendarCheckbox" type="checkbox" onchange="handleRememberCalendarChange(event)" />
+            <input id="rememberCalendarCheckbox" type="checkbox" onchange="handleRememberCalendarChange(event)" class="cursor--hover-pointer"/>
             <div title="Save the calendar and autofill it next time" class="info-circle blue">i</div>
           </li>
           <li>
             <label for="startDate">Start date (12:00 AM)</label>
-            <input class="date-picker" type="date" id="startDate" name="startDate">
+            <input class="date-picker cursor--hover-pointer" type="date" id="startDate" name="startDate">
           </li>
           <li>
             <label for="endDate">End date (11:59 PM)</label>
-            <input class="date-picker" type="date" id="endData" name="endDate">
+            <input class="date-picker cursor--hover-pointer" type="date" id="endData" name="endDate">
           </li>
         </ul>
       </fieldset>
     </form>
-    <button class="submit-button action" onclick="onSubmit()">
+    <button class="submit-button action cursor--hover-pointer" onclick="onSubmit()">
       Get tracking summary and events
     </button>
     <section>
@@ -413,7 +417,6 @@
           .forEach((calendar, index) => {
             this.calendarSelectElement.add(new Option(calendar.name, calendar.id, (index === 0)));
           })
-        console.log('calendarSelectElement', this.calendarSelectElement)
       }
 
       getValue() {
