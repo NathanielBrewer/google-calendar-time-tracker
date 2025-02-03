@@ -4,6 +4,7 @@
   <base target="_top">
   <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
   <style>
+
     .cursor--hover-pointer:hover {
       cursor: pointer;
     }
@@ -93,7 +94,7 @@
       align-self: center;
     }
 
-    .remember-calendar {
+    .remember-calendar, .header-container {
       display: inline-flex;
       column-gap: .5rem;
     }
@@ -102,9 +103,12 @@
 
 <body>
   <main>
-    <h1>
-      Google Calendar Time Tracker
-    </h1>
+    <div class="header-container">
+      <h1>
+        Google Calendar Time Tracker
+      </h1>
+      <div title="Welcome to the Google Calendar Time Tracker!&#10;&#10; A quick and easy tool that calculates your time spent on events for any of your Google calendars.&#10;&#10;To track time for a Google calendar:&#10;&nbsp;&nbsp;&#8226; Create events for the calendar&#10;&nbsp;&nbsp;&#8226; Give events descriptive titles like &quot;Setting up time tracking&quot;&#10;&nbsp;&nbsp;&#8226; Use the Google Calendar Time Tracker weekly to get total and event-by-event hours" class="info-circle blue">i</div>
+    </div>
     <form name="appForm" id="appForm">
       <fieldset>
         <legend></legend>
