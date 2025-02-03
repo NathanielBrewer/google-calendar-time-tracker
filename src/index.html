@@ -87,7 +87,10 @@
 </head>
 
 <body>
-  <div>
+  <main>
+    <h1>
+      Google Calendar Time Tracker
+    </h1>
     <form name="appForm" id="appForm">
       <fieldset>
         <legend></legend>
@@ -127,7 +130,7 @@
       <p id="progressText">Loading</p>
       <p id="progressAmount"></p>
     </div>
-  </div>
+  </main>
   <script>
     google.script.run
       .withSuccessHandler(function(token) {
