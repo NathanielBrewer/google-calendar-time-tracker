@@ -31,6 +31,7 @@ function createAppEvents(dateRange, appEvents, calendarName) {
         Calendar name: ${calendarName}
         Start date: ${getFormatedDateTime(new Date(this.range.start))}
         End date: ${getFormatedDateTime(new Date(this.range.end))}
+        Number of events: ${this.appEvents.length}
         Total hours: ${this.hours()}
 
         EVENTS: 
@@ -48,10 +49,10 @@ function createAppEvent(event) {
     event: event,
     print: () => {
       return `Date: ${getFormatedDateTime(new Date(event.getStartTime()))}
-        Hours: ${getHours()}
-        Title: ${event.getTitle()}
+        Title: ${event.getTitle()}        
         Start: ${getFormatedTime(new Date(event.getStartTime()))}
         End: ${getFormatedTime(new Date(event.getEndTime()))}
+        Hours: ${getHours()}
       `
     },
   }
