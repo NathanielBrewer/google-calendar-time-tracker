@@ -4,7 +4,7 @@
 
 This is a Google Apps Script Web App that, given a Google calendar and date range, provides a summary of the total hours and number of events during the range as well as details for each event.
 
-The interface looks like this:
+The interface looks like this:   
 ![Interface screenshot](/assets/images/interface.png)
    
 And the output looks like this:
