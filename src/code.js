@@ -137,6 +137,7 @@ function client_getOAuthToken() {
 
 function doGet(event) {
   return HtmlService.createHtmlOutputFromFile('index.html')
+  .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
 }
 
 async function client_getSetupData() {
