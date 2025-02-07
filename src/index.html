@@ -4,7 +4,34 @@
   <base target="_top">
   <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
   <style>
-
+    table {
+      border-collapse: collapse;
+      border: var(--border-style);
+      --border-style: .5px solid var(--gray-300);
+      caption {
+        font-size: 1rem;
+        font-weight: bold;
+        line-height: 2rem;
+        text-align: start;
+      }
+      tr {
+        border-top: var(--border-style);
+        border-bottom: var(--border-style);
+      }
+      thead {
+        font-weight: bold;
+        background-color: var(--gray--tint);
+      }
+      th, td {
+        border-left: var(--border-style);
+        border-right: var(--border-style);
+        padding: .25rem .5rem;
+        border: .5px solid 
+      }
+      tr:nth-of-type(even) {
+        background-color: gray;
+      }
+    }
     .cursor--hover-pointer:hover {
       cursor: pointer;
     }
@@ -77,6 +104,7 @@
       --info-blue--tint: #e8f0fe;
       --error-red: #dd4b39;
       --gray--tint: #f3f3f3;
+      --gray-300: #cccccc;
       font-family: Roboto,RobotoDraft,Helvetica,Arial,sans-serif
     }
 
@@ -140,7 +168,9 @@
       Get tracking summary and events
     </button>
     <section>
-      <h2>Tracking summary and events</h1>
+      <h2>Tracking summary and events</h2>
+      <table id="summaryTable">
+      </table>
       <p id="results"></p>
     </section>
     <div id="progressContainer" class="progress-container">
@@ -150,6 +180,82 @@
     </div>
   </main>
   <script>
+    class AppTable {
+      constructor(tableElement, columns, data, caption) {
+        this.tableElement = tableElement;
+        this.columns = columns;
+        this.addHeaders(columns.map((col) => col.displayString));
+        this.tableElement.createTBody();
+        let tableCaption = this.tableElement.createCaption();
+        tableCaption.textContent = caption;
+        if(data) this.addRows(data);
+        // TODO: show table only if setup succeeds
+      }
+
+      addHeaders(headerStrings) {
+        console.log(`addHeaders(headerStrings=${headerStrings})`);
+        const tHead = this.tableElement.createTHead();
+        const row = tHead.insertRow();
+        headerStrings.forEach((headerString) => {
+          const cell = row.insertCell();
+          cell.innerText = (headerString);
+          cell.scope = "col";
+        });
+      }
+
+      addRows(rowsData) {
+        rowsData.forEach((rowData) => this.addRow(rowData));
+      }
+
+      addRow(rowData) {
+        const tBody = this.tableElement.tBodies[0];
+        const row = tBody.insertRow();
+        this.columns.forEach((appCol) => {
+          const cell = row.insertCell();
+          cell.innerText = appCol.transform(rowData) ?? "Missing data";
+          console.log(row);
+        });
+      }
+    }
+
+    class DateTimeUtils {
+      constructor() {console.log('DateTimeUtils.constructor()')}
+
+      getFormatedDateTime(date) {
+        const dateFormatOptions = {
+          weekday: 'long',
+          month: 'short',
+          day: 'numeric',
+        };
+
+        return `${date.toLocaleDateString('en-US', dateFormatOptions)}, ${this.getFormatedTime(date)}`
+      };
+
+      getFormatedTime(date) {
+        const timeFormatOptions = {
+          timeStyle: 'short',
+        }
+        return `${date.toLocaleTimeString('en-US', timeFormatOptions)}`
+      }
+
+      getNumHoursInRange(start, end) {
+        const span = end - start;
+        return span / (1000 * 60 * 60);
+      }
+
+      getNumDaysFromHours(hours) {
+        return Math.round(hours / 24);
+      }
+
+      getNumDaysInRange(start, end) {
+        return this.getNumDaysFromHours(getNumHoursInRange(start, end));
+      }
+
+      hoursToMs(hours) {
+        return hours * 60 * 60 * 1000;
+      }
+    }
+
     google.script.run
       .withSuccessHandler(function(token) {
         if(token == 'Access Denied') {
@@ -168,7 +274,7 @@
 
     let _accessToken = null;
     let _calendarOptions;
-    const LOCAL_STORAGE_CALENDAR_PREFIX = 'gctt_';
+    const LOCAL_STORAGE_APP_PREFIX = 'gctt_';
     
     let _activeErrorMessageElements = [];
     const _progressAmountElement = document.getElementById('progressAmount');
@@ -177,22 +283,50 @@
     const _progressSpinnerElement = document.getElementById('progressSpinner');
     const _form = document.getElementById('appForm')
 
+    const _dtu_dateTimeUtils = new DateTimeUtils();
+
     function registerEventListeners() {
-    
+    }
+    // TODO: finish
+    function setupRememberDates() {
+      setupStorageCheckbox('local', 'rememberDates');
+    }
+
+    function computeIsKeyInLocalStorage(key) {
+      if(!key || key.length === 0) {
+        throw new Error(`#isKeyInLocalStorage(key=${key})
+        Missing required param error. Param 'key' is required`);
+      }
+      return !!window.localStorage.getItem(key);
+    }
+
+    function computeIsCalendarInLocalStorage() {
+      console.log('calling computeIsKeyInLocalStorage() from: computeIsCalendarInLocalStorage')
+      return computeIsKeyInLocalStorage(`${LOCAL_STORAGE_APP_PREFIX}appCalendarData`);
     }
 
     function setupRememberCalendar() {
       if(computeIsCalendarInLocalStorage()) {
-        setIsCheckedForElementWithId('rememberCalendarCheckbox', computeIsKeyInLocalStorage(`${LOCAL_STORAGE_CALENDAR_PREFIX}appCalendarData`));
+        // We remove the key onChange when the attribute's `checked` value changes to `false`
+        setIsCheckedForElementWithId('rememberCalendarCheckbox', computeIsKeyInLocalStorage(`${LOCAL_STORAGE_APP_PREFIX}appCalendarData`));
       }
     }
+    // TODO: Finish
+    // function setupStorageCheckbox(typeOfStorage, key) {
+    //   console.log(`setupStorageCheckbox(typeOfStorage=${typeOfStorage}, key=${key})`);
+    //   if(computeIsKeyInStorage(typeOfStorage, key)) {
+    //     setIsCheckedForElementWithId(key, true);
+    //   }
+    // }
+
+
 
     function setIsCheckedForElementWithId(id, checked) {
       if(!id || id.length === 0) {
         throw new Error(`#getCheckedForElementWithId(id=${id})
         Missing required param error. Param 'id' is required`);
       }
-      const element = document.getElementById(id)
+      const element = document.getElementById(id);
       if(!element) {
         throw new Error(`#getCheckedForElementWithId(id=${id})
         Element not found error. Element with \`id\` not found`);
@@ -204,7 +338,7 @@
       console.log('onchange')
       if(getCheckedForElementWithId('rememberCalendarCheckbox')) {
         window.localStorage.setItem(
-          `${LOCAL_STORAGE_CALENDAR_PREFIX}appCalendarData`, _calendarOptions.getValue())
+          `${LOCAL_STORAGE_APP_PREFIX}appCalendarData`, _calendarOptions.getSelectElementValue())
       }
     }
 
@@ -230,17 +364,17 @@
     }
 
     function computeIsCalendarInLocalStorage() {
-      return computeIsKeyInLocalStorage(`${LOCAL_STORAGE_CALENDAR_PREFIX}appCalendarData`);
+      return computeIsKeyInLocalStorage(`${LOCAL_STORAGE_APP_PREFIX}appCalendarData`);
     }
 
     function handleRememberCalendarChange(event) {
       // TODO: check localStorage to see if we are remembering
-      const localStorageKey = `${LOCAL_STORAGE_CALENDAR_PREFIX}appCalendarData`;
+      const localStorageKey = `${LOCAL_STORAGE_APP_PREFIX}appCalendarData`;
       if(computeIsCalendarInLocalStorage()) {
         window.localStorage.removeItem(localStorageKey);
         return;
       }
-      window.localStorage.setItem(localStorageKey, _calendarOptions.getValue());
+      window.localStorage.setItem(localStorageKey, _calendarOptions.getSelectElementValue());
     }
 
     function onAuthSuccess() {
@@ -292,15 +426,18 @@
     }
 
     function setup(data) {
+      console.log('setup(data)');
       if(!data.calendars) {
         console.error(`#setup(data=${JSON.stringify(data)})
           Error. calendars data is required for setup
         `);
+        return;
       }
       _calendarOptions = new CalendarOptions(data.calendars);
-      setupRememberCalendar()
+      setupRememberCalendar();
+      // setupRememberDates()
       if(computeIsCalendarInLocalStorage()) {
-        const localStorageCalendarId = window.localStorage.getItem(`${LOCAL_STORAGE_CALENDAR_PREFIX}appCalendarData`);
+        const localStorageCalendarId = window.localStorage.getItem(`${LOCAL_STORAGE_APP_PREFIX}appCalendarData`);
         if(_calendarOptions.computeHasCalendar(localStorageCalendarId)) {
           _calendarOptions.setValue(localStorageCalendarId);
         }
@@ -331,6 +468,7 @@
     }
 
     function validateForm() {
+      // TODO: vailidation: Make sure that the `end date` is larger than the `start date`
       _activeErrorMessageElements.forEach((errorElement) => {
         errorElement.innerText = '';
       });
@@ -347,11 +485,67 @@
       return _activeErrorMessageElements.length === 0;
     }
 
+    function setupTables(data) {
+      const summaryTableColumns = [
+        {displayString: 'Calendar', transform: (rowData) => rowData.calendarName },
+        {displayString: 'Start date', transform: (rowData) => _dtu_dateTimeUtils.getFormatedDateTime(new Date(rowData.start))},
+        {displayString: 'End date', transform: (rowData) => _dtu_dateTimeUtils.getFormatedDateTime(new Date(rowData.end))},
+        {displayString: 'Number of events', transform: (rowData) => rowData.numEvents},
+        {displayString: 'Total hours', transform: (rowData) => rowData.totalHours}
+      ];
+      // setupTable('summaryTable', [data.summaryData]);
+      const summaryTableElement = document.getElementById('summaryTable');
+      const summaryTable = new AppTable(summaryTableElement, summaryTableColumns, [data.summaryData], 'Calendar summary');
+    }
+
+    function setupTable(id, dataForTable) {
+      const tableElement = document.getElementById(id);
+      if(!tableElement) {
+        console.error(`#setupTable(id=${id})
+          Table not found error.
+        `);
+        return;
+      }
+      console.log('tableElement', tableElement)
+      const headers = getTableHeaders(tableElement);
+      const tBody = tableElement.tBodies[0];
+      dataForTable.forEach((data) => {
+        const row = tBody.insertRow();
+        headers.forEach((header) => {
+          row.insertCell().textContent = data[header.toLowerCase] ?? 'Missing data'});
+      });
+    }
+
+    class AppColumn {
+      constructor(displayString, transform) {
+        this.displayString = displayString;
+        this.transform = transform;
+      }
+    }
+
+    function getTableHeaders(tableElement) {
+      const headers = []
+      const cells = tableElement.tHead?.rows[0].cells;
+      if(!cells) {
+        console.error(`#getTableHeaders(tableElement=${JSON.stringify(tableElement)})
+          Error. Param does not have tHead element.
+        `);
+        return null;
+      }
+      for(const thElement of cells) {
+        headers.push(thElement.innerText);
+      }
+      console.log(`getTableHeaders(tableElement) headers=${headers}`)
+      return headers;
+    }
+
     async function run() {
       try {
         google.script.run
-          .withSuccessHandler(async function(results) {
-            showResults(results);
+          .withSuccessHandler(function(resultsData) {
+            console.log('resultsData', resultsData)
+            setupTables(resultsData)
+            showResults(resultsData.displayString);
             hideElement(_progressContainerElement);
           })
           .withFailureHandler(function(error) {
@@ -433,7 +627,7 @@
           })
       }
 
-      getValue() {
+      getSelectElementValue() {
         return this.calendarSelectElement.value;
       }
 
@@ -445,6 +639,5 @@
         this.calendarSelectElement.value = id;
       }
     }
-
   </script>
 </body>

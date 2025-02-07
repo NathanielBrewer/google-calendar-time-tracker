@@ -27,16 +27,29 @@ function createAppEvents(dateRange, appEvents, calendarName) {
     },
     appEvents: appEvents,
     print: function () {
-      return `SUMMARY:
-        Calendar name: ${calendarName}
-        Start date: ${getFormatedDateTime(new Date(this.range.start))}
-        End date: ${getFormatedDateTime(new Date(this.range.end))}
-        Number of events: ${this.appEvents.length}
-        Total hours: ${this.hours()}
+    // TODO: remove this commented-out code when the all the tables are in place on the client-side
+    //   return `SUMMARY:
+    //     Calendar name: ${calendarName}
+    //     Start date: ${getFormatedDateTime(new Date(this.range.start))}
+    //     End date: ${getFormatedDateTime(new Date(this.range.end))}
+    //     Number of events: ${this.appEvents.length}
+    //     Total hours: ${this.hours()}
 
-        EVENTS: 
+    //     EVENTS: 
+    //     ${this.appEvents.map((appEvent) => appEvent.print()).join("\n")}`;
+    // },
+      return `EVENTS: 
         ${this.appEvents.map((appEvent) => appEvent.print()).join("\n")}`;
     },
+    getData: function () {
+      return {
+        calendarName: calendarName,
+        start: this.range.start,
+        end: this.range.end,
+        numEvents: this.appEvents.length,
+        totalHours: this.hours(),
+      }
+    }
   };
 }
 
@@ -55,10 +68,17 @@ function createAppEvent(event) {
         Hours: ${getHours()}
       `
     },
+    getData: () => {
+      return {
+        startTime: event.getStartTime(),
+        title: event.getTitle(),
+        endTime: event.getEndTime(),
+      }
+    }
   }
 }
 
-function getAppEventsForRanges(calendar, dateRanges) {
+function getCalendarEventsForRanges(calendar, dateRanges) {
   return dateRanges.map((dateRange) => {
     return calendar.getEvents(dateRange.start, dateRange.end)
       .filter((event) => {
@@ -71,6 +91,19 @@ function getAppEventsForRanges(calendar, dateRanges) {
   }).filter((appEventsForRange) => (appEventsForRange && appEventsForRange.length > 0)).flat();
 }
 
+// function client_computeResults(calendarId, dateRange) {
+//   const calendar = CalendarApp.getCalendarById(calendarId);
+//   if(!calendar) {
+//     throw new Error(`#client_computeResults(calendarId=${calendarId}, dateRange=${dateRange})
+//       Calendar not found error
+//     `);
+//   }
+//   const interval = hoursToMs(24);
+//   const dateRanges = getRangesForInterval(dateRange, interval);
+//   const appEventsForRanges = getGoogleAppEventsForRanges(calendar, dateRanges);
+//   return createAppEvents(dateRange, appEventsForRanges, calendar.getName()).print();
+// }
+
 function client_computeResults(calendarId, dateRange) {
   const calendar = CalendarApp.getCalendarById(calendarId);
   if(!calendar) {
@@ -80,10 +113,17 @@ function client_computeResults(calendarId, dateRange) {
   }
   const interval = hoursToMs(24);
   const dateRanges = getRangesForInterval(dateRange, interval);
-  const appEventsForRanges = getAppEventsForRanges(calendar, dateRanges);
-  return createAppEvents(dateRange, appEventsForRanges, calendar.getName()).print();
+  const calendarEventsForRanges = getCalendarEventsForRanges(calendar, dateRanges);
+  console.log('calendarEventsForRanges', calendarEventsForRanges)
+  const appEvents = createAppEvents(dateRange, calendarEventsForRanges, calendar.getName());
+  const data = {
+    displayString: appEvents.print(),
+    summaryData: appEvents.getData(),
+    eventsData: appEvents,
+  }
+  console.log(`appEvents=${JSON.stringify(appEvents)}, data=${JSON.stringify(data)}`);
+  return data;
 }
-
 
 function getRangesForInterval(dateRange, interval) {
   console.log(`getRangesForInterval(dateRange: ${JSON.stringify(dateRange)}, interval: ${interval})`)
