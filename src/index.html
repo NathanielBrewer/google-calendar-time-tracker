@@ -20,7 +20,7 @@
       }
       thead {
         font-weight: bold;
-        background-color: var(--gray--tint);
+        background-color: lightgray;
       }
       th, td {
         border-left: var(--border-style);
@@ -29,7 +29,7 @@
         border: .5px solid 
       }
       tr:nth-of-type(even) {
-        background-color: gray;
+        background-color: var(--gray--tint);
       }
     }
     .cursor--hover-pointer:hover {
@@ -168,10 +168,10 @@
       Get tracking summary and events
     </button>
     <section>
-      <h2>Tracking summary and events</h2>
       <table id="summaryTable">
       </table>
-      <p id="results"></p>
+      <table id="eventsTable">
+      </table>
     </section>
     <div id="progressContainer" class="progress-container">
       <div class="progress-spinner"></div>
@@ -182,6 +182,7 @@
   <script>
     class AppTable {
       constructor(tableElement, columns, data, caption) {
+        // console.log(`#AppTable.constructor(tableElement, columns=${JSON.stringify(columns)}, data, caption)`);
         this.tableElement = tableElement;
         this.columns = columns;
         this.addHeaders(columns.map((col) => col.displayString));
@@ -193,7 +194,6 @@
       }
 
       addHeaders(headerStrings) {
-        console.log(`addHeaders(headerStrings=${headerStrings})`);
         const tHead = this.tableElement.createTHead();
         const row = tHead.insertRow();
         headerStrings.forEach((headerString) => {
@@ -219,7 +219,7 @@
     }
 
     class DateTimeUtils {
-      constructor() {console.log('DateTimeUtils.constructor()')}
+      constructor() {}
 
       getFormatedDateTime(date) {
         const dateFormatOptions = {
@@ -301,7 +301,6 @@
     }
 
     function computeIsCalendarInLocalStorage() {
-      console.log('calling computeIsKeyInLocalStorage() from: computeIsCalendarInLocalStorage')
       return computeIsKeyInLocalStorage(`${LOCAL_STORAGE_APP_PREFIX}appCalendarData`);
     }
 
@@ -319,23 +318,20 @@
     //   }
     // }
 
-
-
     function setIsCheckedForElementWithId(id, checked) {
       if(!id || id.length === 0) {
-        throw new Error(`#getCheckedForElementWithId(id=${id})
+        throw new Error(`#setIsCheckedForElementWithId(id=${id})
         Missing required param error. Param 'id' is required`);
       }
       const element = document.getElementById(id);
       if(!element) {
-        throw new Error(`#getCheckedForElementWithId(id=${id})
+        throw new Error(`#setIsCheckedForElementWithId(id=${id})
         Element not found error. Element with \`id\` not found`);
       }
       return element.checked = checked;
     }
 
     function handleCalendarChange(event) {
-      console.log('onchange')
       if(getCheckedForElementWithId('rememberCalendarCheckbox')) {
         window.localStorage.setItem(
           `${LOCAL_STORAGE_APP_PREFIX}appCalendarData`, _calendarOptions.getSelectElementValue())
@@ -358,7 +354,8 @@
     function computeIsKeyInLocalStorage(key) {
       if(!key || key.length === 0) {
         throw new Error(`#isKeyInLocalStorage(key=${key})
-        Missing required param error. Param 'key' is required`);
+        Missing required param error. Param 'key' is required
+        `);
       }
       return !!window.localStorage.getItem(key);
     }
@@ -391,8 +388,8 @@
         ${error.message}`;
         onSuccess(error.message);
         console.error(`#google.script.run.getSetupData()
-          error${JSON.stringify(error)}`
-        );
+        error${JSON.stringify(error)}
+        `);
       })
       .client_getSetupData();
     }
@@ -429,7 +426,7 @@
       console.log('setup(data)');
       if(!data.calendars) {
         console.error(`#setup(data=${JSON.stringify(data)})
-          Error. calendars data is required for setup
+        Error. calendars data is required for setup
         `);
         return;
       }
@@ -443,7 +440,6 @@
         }
       }
       setupDatePickers()
-      // registerEventListeners();
     }
 
     function setupDatePickers() {
@@ -485,7 +481,7 @@
       return _activeErrorMessageElements.length === 0;
     }
 
-    function setupTables(data) {
+    function setupTables(summaryTableData, eventsData) {
       const summaryTableColumns = [
         {displayString: 'Calendar', transform: (rowData) => rowData.calendarName },
         {displayString: 'Start date', transform: (rowData) => _dtu_dateTimeUtils.getFormatedDateTime(new Date(rowData.start))},
@@ -493,9 +489,17 @@
         {displayString: 'Number of events', transform: (rowData) => rowData.numEvents},
         {displayString: 'Total hours', transform: (rowData) => rowData.totalHours}
       ];
-      // setupTable('summaryTable', [data.summaryData]);
+      const eventsTableColumns = [
+        {displayString: 'Title', transform: (rowData) => rowData.title},
+        {displayString: 'Start time', transform: (rowData) => _dtu_dateTimeUtils.getFormatedDateTime(new Date(rowData.start))},
+        {displayString: 'End time', transform: (rowData) => _dtu_dateTimeUtils.getFormatedDateTime(new Date(rowData.end))},
+        {displayString: 'Hours', transform: (rowData) => rowData.hours},
+      ];
+
       const summaryTableElement = document.getElementById('summaryTable');
-      const summaryTable = new AppTable(summaryTableElement, summaryTableColumns, [data.summaryData], 'Calendar summary');
+      const eventsTableElement = document.getElementById('eventsTable');
+      const summaryTable = new AppTable(summaryTableElement, summaryTableColumns, [summaryTableData], 'Calendar summary');
+      const eventsTable = new AppTable(eventsTableElement, eventsTableColumns, eventsData, 'Calendar details');
     }
 
     function setupTable(id, dataForTable) {
@@ -535,7 +539,6 @@
       for(const thElement of cells) {
         headers.push(thElement.innerText);
       }
-      console.log(`getTableHeaders(tableElement) headers=${headers}`)
       return headers;
     }
 
@@ -543,9 +546,12 @@
       try {
         google.script.run
           .withSuccessHandler(function(resultsData) {
-            console.log('resultsData', resultsData)
-            setupTables(resultsData)
-            showResults(resultsData.displayString);
+            if(!resultsData) {
+              throw new Error(`#Error in google.script.run |> successHandler(resultsData=${resultsData})
+              Parameter missing error. resultsData is requried
+              `);
+            }
+            setupTables(resultsData.summaryData, resultsData.eventsData);
             hideElement(_progressContainerElement);
           })
           .withFailureHandler(function(error) {
@@ -576,20 +582,10 @@
       }
     }
 
-    function showResults(results) {
-      document.getElementById('results').innerText = results;
-    }
-
     function onSuccess() {
       hideElement(_progressSpinnerElement);
       hideElement(_progressAmountElement);
       setProgressText('Success');
-    }
-
-    function onFailure() {
-      hideElement(_progressSpinnerElement);
-      hideElement(_progressAmountElement);
-      setProgressText('Failure');
     }
 
     function presentError(message) {
@@ -600,17 +596,6 @@
       hideElement(_progressContainerElement);
       resetProgressContainerChildren();
       presentError(errorMessage);
-
-      google.script.run
-        .withSuccessHandler(function() {
-        })
-        .withFailureHandler(function(error) {
-          const message = `File upload failed. 
-          [onUploadSuccess(linkToFile) error] error: ${error.message}`;
-          presentError(message);
-          console.error(message);        
-        })
-        .onFailure();
     }
 
     class CalendarOptions {

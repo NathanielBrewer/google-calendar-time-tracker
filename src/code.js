@@ -15,7 +15,7 @@ function getFormatedTime(date) {
   return `${date.toLocaleTimeString('en-US', timeFormatOptions)}`
 }
 
-function createAppEvents(dateRange, appEvents, calendarName) {
+function createAppEventsSummary(dateRange, appEvents, calendarName) {
   return {
     range: dateRange,
     hours: function () {
@@ -42,6 +42,16 @@ function createAppEvents(dateRange, appEvents, calendarName) {
         ${this.appEvents.map((appEvent) => appEvent.print()).join("\n")}`;
     },
     getData: function () {
+      const data = {
+        calendarName: calendarName,
+        start: this.range.start,
+        end: this.range.end,
+        numEvents: this.appEvents.length,
+        totalHours: this.hours(),
+      }
+      console.log(`#createAppEventsSummary.getData()
+        data=${JSON.stringify(data)}
+        `);
       return {
         calendarName: calendarName,
         start: this.range.start,
@@ -69,59 +79,58 @@ function createAppEvent(event) {
       `
     },
     getData: () => {
-      return {
-        startTime: event.getStartTime(),
+      const data = {
         title: event.getTitle(),
-        endTime: event.getEndTime(),
+        start: new Date(event.getStartTime()).toJSON(),
+        end: new Date(event.getEndTime()).toJSON(),
+        hours: getHours(),
       }
+      return data;
     }
   }
 }
 
 function getCalendarEventsForRanges(calendar, dateRanges) {
-  return dateRanges.map((dateRange) => {
-    return calendar.getEvents(dateRange.start, dateRange.end)
-      .filter((event) => {
-        return !(event.getDescription().includes('not billable') || event.getDescription().includes('Not billable'))
-          && !(event.getDescription().includes("don't track") || event.getDescription().includes("Don't track"))
-      })
-      .map((event) => {
-      return createAppEvent(event)
-    });
-  }).filter((appEventsForRange) => (appEventsForRange && appEventsForRange.length > 0)).flat();
+  return dateRanges
+    .map((dateRange) => {
+      return calendar
+        .getEvents(dateRange.start, dateRange.end)
+          .filter((event) => {
+            return !(event.getDescription().includes('not billable') || event.getDescription().includes('Not billable')) && !(event.getDescription().includes("don't track") || event.getDescription().includes("Don't track"))
+          })
+    }).flat();
 }
 
-// function client_computeResults(calendarId, dateRange) {
-//   const calendar = CalendarApp.getCalendarById(calendarId);
-//   if(!calendar) {
-//     throw new Error(`#client_computeResults(calendarId=${calendarId}, dateRange=${dateRange})
-//       Calendar not found error
-//     `);
-//   }
-//   const interval = hoursToMs(24);
-//   const dateRanges = getRangesForInterval(dateRange, interval);
-//   const appEventsForRanges = getGoogleAppEventsForRanges(calendar, dateRanges);
-//   return createAppEvents(dateRange, appEventsForRanges, calendar.getName()).print();
-// }
-
 function client_computeResults(calendarId, dateRange) {
+  console.warn(`#client_computeResutls(calendarId=${calendarId}, dateRange=${JSON.stringify(dateRange)})`);
   const calendar = CalendarApp.getCalendarById(calendarId);
   if(!calendar) {
-    throw new Error(`#client_computeResults(calendarId=${calendarId}, dateRange=${dateRange})
+    throw new Error(`#Error in client_computeResults(calendarId=${calendarId}, dateRange=${JSON.stringify(dateRange)})
       Calendar not found error
     `);
   }
+  console.log(`#client_computeResults(calendarId=${calendarId}, dateRange=${JSON.stringify(dateRange)})
+  `)
   const interval = hoursToMs(24);
   const dateRanges = getRangesForInterval(dateRange, interval);
   const calendarEventsForRanges = getCalendarEventsForRanges(calendar, dateRanges);
-  console.log('calendarEventsForRanges', calendarEventsForRanges)
-  const appEvents = createAppEvents(dateRange, calendarEventsForRanges, calendar.getName());
+  const appEvents = calendarEventsForRanges.map((calendarEvent) => createAppEvent(calendarEvent));
+  const appEventsSummary = createAppEventsSummary(dateRange, appEvents, calendar.getName());
+  let eventsData = [];
+  appEvents.forEach((appEvent) => {
+    eventsData.push(appEvent.getData());
+    // eventsData.push(appEvent.getData());
+
+  })
+  Utilities.sleep(1000);
   const data = {
-    displayString: appEvents.print(),
-    summaryData: appEvents.getData(),
-    eventsData: appEvents,
+    summaryData: appEventsSummary.getData(),
+    eventsData: eventsData,
   }
-  console.log(`appEvents=${JSON.stringify(appEvents)}, data=${JSON.stringify(data)}`);
+  console.log('data.eventsData', data.eventsData)
+  console.log(`#client_computeResults
+  data.length=${Object.keys(data).length}, appEvents.length=${appEvents.length})}
+  `);
   return data;
 }
 
