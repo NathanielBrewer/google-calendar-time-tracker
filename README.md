@@ -5,28 +5,10 @@
 This is a Google Apps Script Web App that, given a Google calendar and date range, provides a summary of the total hours and number of events during the range as well as details for each event.
 
 The interface looks like this:   
-![Interface screenshot](/assets/images/interface.png)
+![Interface screenshot](/assets/images/interface.png)   
    
 And the output looks like this:
-> SUMMARY:   
-Calendar name: Google Calendar Time Tracker   
-Start date: Tuesday, Jan 28, 12:00 AM   
-End date: Friday, Jan 31, 11:59 PM   
-Number of events: 2   
-Total hours: 3.25   
->   
->EVENTS:   
-Date: Tuesday, Jan 28, 10:00 AM 
-Title: Call with team   
-Start: 10:00 AM   
-End: 11:00 AM 
-Hours: 1   
->
->Date: Wednesday, Jan 29, 9:45 AM   
-Title: Doing the work   
-Start: 9:45 AM   
-End: 12:00 PM   
-Hours: 2.25      
+![Results screenshot](/assets/images/results.png)   
 
 ### Example usage
 
