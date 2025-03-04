@@ -119,10 +119,7 @@ function client_computeResults(calendarId, dateRange) {
   let eventsData = [];
   appEvents.forEach((appEvent) => {
     eventsData.push(appEvent.getData());
-    // eventsData.push(appEvent.getData());
-
   })
-  Utilities.sleep(1000);
   const data = {
     summaryData: appEventsSummary.getData(),
     eventsData: eventsData,
