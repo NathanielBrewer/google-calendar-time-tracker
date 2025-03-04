@@ -1,3 +1,52 @@
+class TasksUtils {
+  constructor() {}
+
+  findTasksForRange(start, end, tasklistId) {
+    let normalizedStart;
+    let normalizedEnd;
+    // TODO: get a validateID method
+    if(!tasklistId) {
+      console.error(`#TasksUtils.findTasksForRange(start=${start}, end=${end}, taskList)
+      tasklist.items has not items
+      `);
+      return null;
+    }
+    if(!(start instanceof Date)) {
+      const testDate = new Date(start);
+      if(isNaN(testDate)) {
+        console.error(`#TasksUtils.findTasksForRange(start=${start}, end=${end}, taskList)
+        start is not a date and trying to make it one just failed. 
+        `);
+        return null;
+      }
+    }
+    if(!(end instanceof Date)) {
+      const testDate = new Date(end);
+      if(isNaN(testDate)) {
+        console.error(`#TasksUtils.findTasksForRange(start=${start}, end=${end}, taskList)
+          ##Param 'type' error
+          end is not a date and trying to make it one just failed. 
+          `);
+        return null;
+      }
+    }
+
+    // Now we know we have start and end Dates and a list
+    const params = {
+      dueMin: startDate.toISOString(),
+      dueMax: endDate.toISOString(),
+      showCompleted: true, // change as needed
+      showDeleted: false,
+      showHidden: false
+    };
+
+    var tasksResponse = Tasks.Tasks.list(taskListId, params);
+    var tasks = tasksResponse.items || [];
+    return tasks;
+  }
+
+}
+
 function getFormatedDateTime(date) {
   const dateFormatOptions = {
     weekday: 'long',

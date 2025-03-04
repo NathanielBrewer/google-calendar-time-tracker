@@ -10,7 +10,13 @@
     ]
   },
   "oauthScopes": [
-    "https://www.googleapis.com/auth/calendar.readonly"
+    "https://www.googleapis.com/auth/calendar.readonly",
+    "https://www.googleapis.com/auth/tasks"
+  ],
+  "oauthScopes.suggestedButNotInUse": [
+    "https://www.googleapis.com/auth/calendar.readonly",
+    "https://www.googleapis.com/auth/tasks",
+    "https://www.googleapis.com/auth/script.external_request"
   ],
   "exceptionLogging": "STACKDRIVER",
   "runtimeVersion": "V8",
