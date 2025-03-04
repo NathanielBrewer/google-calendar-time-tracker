@@ -127,7 +127,6 @@ function client_computeResults(calendarId, dateRange) {
     summaryData: appEventsSummary.getData(),
     eventsData: eventsData,
   }
-  console.log('data.eventsData', data.eventsData)
   console.log(`#client_computeResults
   data.length=${Object.keys(data).length}, appEvents.length=${appEvents.length})}
   `);

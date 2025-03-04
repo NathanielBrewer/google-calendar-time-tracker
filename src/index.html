@@ -213,7 +213,6 @@
         this.columns.forEach((appCol) => {
           const cell = row.insertCell();
           cell.innerText = appCol.transform(rowData) ?? "Missing data";
-          console.log(row);
         });
       }
     }
