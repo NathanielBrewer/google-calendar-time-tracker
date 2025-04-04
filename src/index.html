@@ -258,10 +258,10 @@
     google.script.run
       .withSuccessHandler(function(token) {
         if(token == 'Access Denied') {
-          alert("You do not have the necessary permissions to upload file.");
+          alert("You do not have the necessary Google permissions.");
         } else {
           _accessToken = token;
-          onAuthSuccess()
+          onAuthSuccess();
         }
       })
       .withFailureHandler(function(error) {
@@ -283,9 +283,20 @@
     const _form = document.getElementById('appForm')
 
     const _dtu_dateTimeUtils = new DateTimeUtils();
-
-    function registerEventListeners() {
+    function appPostMessage(message) {
+      try {
+        window.parent.parent.parent.postMessage(message, '*');
+      } catch (error) {
+        console.warn(`window.parent.parent.parent.postMessage(message=${message}) failed. This might be because: 1. the Google changed the number of window parents, or 2. This is not running in an iFrame.`);
+      }
     }
+    // This may be running in an iFrame. Send a message out of the iFrame so the container knows the user is logged in, otherwise we wouldn't have made it this far
+    appPostMessage('success');
+
+    // If it is in an iFrame, the container cannot register for events within the iFrame so let it know there was a click event
+    // For example, this is used by ncbrewer.ca to inform it that there was a click outside of the mobile navigation menu so the menu will close
+    document.addEventListener('click', (event) => appPostMessage('click event'));
+
     // TODO: finish
     function setupRememberDates() {
       setupStorageCheckbox('local', 'rememberDates');
@@ -422,7 +433,6 @@
     }
 
     function setup(data) {
-      console.log('setup(data)');
       if(!data.calendars) {
         console.error(`#setup(data=${JSON.stringify(data)})
         Error. calendars data is required for setup
