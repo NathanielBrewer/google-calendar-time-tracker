@@ -27,18 +27,14 @@ function createAppEventsSummary(dateRange, appEvents, calendarName) {
     },
     appEvents: appEvents,
     print: function () {
-    // TODO: remove this commented-out code when the all the tables are in place on the client-side
-    //   return `SUMMARY:
-    //     Calendar name: ${calendarName}
-    //     Start date: ${getFormatedDateTime(new Date(this.range.start))}
-    //     End date: ${getFormatedDateTime(new Date(this.range.end))}
-    //     Number of events: ${this.appEvents.length}
-    //     Total hours: ${this.hours()}
+      return `SUMMARY:
+        Calendar name: ${calendarName}
+        Start date: ${getFormatedDateTime(new Date(this.range.start))}
+        End date: ${getFormatedDateTime(new Date(this.range.end))}
+        Number of events: ${this.appEvents.length}
+        Total hours: ${this.hours()}
 
-    //     EVENTS: 
-    //     ${this.appEvents.map((appEvent) => appEvent.print()).join("\n")}`;
-    // },
-      return `EVENTS: 
+        EVENTS: 
         ${this.appEvents.map((appEvent) => appEvent.print()).join("\n")}`;
     },
     getData: function () {
