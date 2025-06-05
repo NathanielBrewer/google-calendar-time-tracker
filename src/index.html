@@ -468,9 +468,16 @@
         showElement(_progressSpinnerElement);
         showElement(_progressContainerElement);
         setProgressText('Working');
+        if(computeIsEventsTablePopulated()) {
+          clearTables();
+        }
         run()
       }
 
+    }
+
+    function computeIsEventsTablePopulated() {
+      return document.getElementById('eventsTable')?.rows.length > 0
     }
 
     function validateForm() {
@@ -489,6 +496,16 @@
 
     function computeIsFormValid() {
       return _activeErrorMessageElements.length === 0;
+    }
+
+    function clearTables() {
+      [document.getElementById('summaryTable'), document.getElementById('eventsTable')].forEach((table) => {
+        table.deleteTHead();
+        table.deleteCaption();
+        [...table.tBodies].forEach((tBody) => {
+          tBody.remove();
+        })
+      });
     }
 
     function setupTables(summaryTableData, eventsData) {
