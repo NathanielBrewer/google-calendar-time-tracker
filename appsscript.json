@@ -19,6 +19,6 @@
     "executeAs": "USER_ACCESSING"
   },
   "executionApi": {
-    "access": "MYSELF"
+    "access": "ANYONE"
   }
 }
