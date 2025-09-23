@@ -1,7 +1,7 @@
 {
   "name": "google-calendar-time-tracker",
   "version": "1.0.0",
-  "description": "",
+  "description": "Google Calendar Time Tracker summarizes the events for date range.",
   "main": "code.js",
   "scripts": {
     "build:dev": "NODE_ENV=dev rollup -c && NODE_ENV=dev node ./build/adjustClasp.js",
@@ -23,19 +23,18 @@
     "Google",
     "Apps",
     "Script",
-    "Rollup",
-    "JavaScript",
-    "Build"
+    "Calendar",
+    "time-tracker"
   ],
   "author": "nathanielc.brewer@gmail.com",
   "license": "See licence in LICENCE",
   "bugs": {
     "url": ""
   },
-  "homepage": "",
+  "homepage": "https:/www.ncbrewer.ca/time-tracker",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^26.0.1",
-    "@rollup/plugin-html": "^1.0.3",
+    "@rollup/plugin-html": "^2.0.0",
     "@rollup/plugin-inject": "^5.0.5",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-strip": "^3.0.4",
