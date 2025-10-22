@@ -191,3 +191,10 @@ async function client_getSetupData() {
     }),
   }
 }
+
+function client_getInvoiceTemplates() {
+  return {
+    pageWithTotals: HtmlService.createHtmlOutputFromFile('invoice-builder/pageWithTotals').getContent(),
+    pageWithoutTotals: HtmlService.createHtmlOutputFromFile('invoice-builder/pageWithoutTotals').getContent(),
+  }
+}

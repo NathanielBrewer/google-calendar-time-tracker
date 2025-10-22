@@ -127,6 +127,28 @@
       column-gap: .5rem;
       line-height: 1.25;
     }
+
+    #invoiceBuilderSection {
+      margin-top: 2rem;
+    }
+
+    #invoiceBuilderFieldset[disabled] {
+      opacity: 0.6;
+    }
+
+    #invoiceOutput {
+      margin-top: 1.5rem;
+      display: grid;
+      row-gap: 1.5rem;
+    }
+
+    #invoiceOutput svg {
+      width: 100%;
+      max-width: 595px;
+      border: 1px solid var(--gray-300);
+      border-radius: 12.25px;
+      background: white;
+    }
   </style>
 </head>
 
@@ -173,6 +195,26 @@
       </table>
       <table id="eventsTable">
       </table>
+    </section>
+    <section id="invoiceBuilderSection">
+      <h2>Invoice Builder</h2>
+      <p id="invoiceBuilderStatusMessage">The Invoice Builder will be enabled after using the time tracker.</p>
+      <fieldset id="invoiceBuilderFieldset" disabled>
+        <form id="invoiceBuilderForm" onsubmit="handleInvoiceFormSubmit(event)">
+          <ul>
+            <li>
+              <label for="clientInvoiceNumberInput">Client-provided invoice number</label>
+              <input id="clientInvoiceNumberInput" name="clientInvoiceNumber" type="text" placeholder="Optional">
+            </li>
+            <li>
+              <label for="invoiceNumberInput">Invoice number</label>
+              <input id="invoiceNumberInput" name="invoiceNumber" type="text" value="#1" placeholder="#1">
+            </li>
+          </ul>
+          <button type="submit" class="action cursor--hover-pointer">Generate invoice</button>
+        </form>
+      </fieldset>
+      <div id="invoiceOutput"></div>
     </section>
     <div id="progressContainer" class="progress-container">
       <div class="progress-spinner"></div>
@@ -283,6 +325,19 @@
     const _progressSpinnerElement = document.getElementById('progressSpinner');
     const _form = document.getElementById('appForm')
 
+    const RATE_PER_HOUR = 28;
+    const MAX_ROWS_PER_TOTALS_PAGE = 17;
+    const MAX_ROWS_PER_STANDARD_PAGE = 25;
+    const INVOICE_DESCRIPTION_MAX_WIDTH = 201;
+    const INVOICE_DUE_DATE_OFFSET_DAYS = 14;
+    const TAX_DISPLAY_VALUE = '$0';
+    const RATE_DISPLAY_VALUE = `$${RATE_PER_HOUR}`;
+    const ROW_BASELINE_START_Y = 347.636;
+    const ROW_VERTICAL_SPACING = 17;
+    const ROW_MULTILINE_LINE_HEIGHT = 12;
+    const DARK_ROW_RECT_VERTICAL_OFFSET = 10.636;
+    let _invoiceBuilderController = null;
+
     const _dtu_dateTimeUtils = new DateTimeUtils();
     function appPostMessage(message) {
       try {
@@ -383,6 +438,13 @@
         return;
       }
       window.localStorage.setItem(localStorageKey, _calendarOptions.getSelectElementValue());
+    }
+
+    function handleInvoiceFormSubmit(event) {
+      event.preventDefault();
+      if(_invoiceBuilderController) {
+        _invoiceBuilderController.handleFormSubmit(event);
+      }
     }
 
     function onAuthSuccess() {
@@ -579,6 +641,9 @@
               `);
             }
             setupTables(resultsData.summaryData, resultsData.eventsData);
+            if(_invoiceBuilderController) {
+              _invoiceBuilderController.onResults(resultsData);
+            }
             hideElement(_progressContainerElement);
           })
           .withFailureHandler(function(error) {
@@ -651,5 +716,395 @@
         this.calendarSelectElement.value = id;
       }
     }
+
+    function formatCurrency(amount) {
+      const numericAmount = Number.isFinite(amount) ? amount : 0;
+      return `$${numericAmount.toFixed(2)}`;
+    }
+
+    function formatInvoiceHeaderDate(date) {
+      const workingDate = new Date(date.getTime());
+      const day = workingDate.getDate();
+      const month = workingDate.toLocaleDateString('en-US', { month: 'short' });
+      const year = workingDate.getFullYear();
+      return `${day} ${month}, ${year}`;
+    }
+
+    function formatInvoiceRowDate(date) {
+      return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
+    function formatInvoiceRowTime(date) {
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    }
+
+    function addDays(date, numberOfDays) {
+      const workingDate = new Date(date.getTime());
+      workingDate.setDate(workingDate.getDate() + numberOfDays);
+      return workingDate;
+    }
+
+    function roundToTwo(value) {
+      const numericValue = Number(value) || 0;
+      return Math.round(numericValue * 100) / 100;
+    }
+
+    function formatHours(value) {
+      const rounded = roundToTwo(value);
+      return rounded.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
+    }
+
+    class InvoiceBuilderController {
+      constructor() {
+        this.fieldset = document.getElementById('invoiceBuilderFieldset');
+        this.statusMessageElement = document.getElementById('invoiceBuilderStatusMessage');
+        this.outputElement = document.getElementById('invoiceOutput');
+        this.templates = null;
+        this.templatePromise = null;
+        this.resultsData = null;
+        this.measureCanvas = document.createElement('canvas');
+        this.measureContext = this.measureCanvas?.getContext('2d') ?? null;
+        this.canvasFont = '600 10px "Inter", sans-serif';
+        this.disable('The Invoice Builder will be enabled after using the time tracker.');
+      }
+
+      disable(message) {
+        if(this.fieldset) {
+          this.fieldset.disabled = true;
+        }
+        if(this.statusMessageElement && typeof message === 'string') {
+          this.statusMessageElement.textContent = message;
+        }
+        this.clearOutput();
+      }
+
+      clearOutput() {
+        if(this.outputElement) {
+          this.outputElement.innerHTML = '';
+        }
+      }
+
+      onResults(resultsData) {
+        const hasRows = resultsData?.eventsData && Array.isArray(resultsData.eventsData) && resultsData.eventsData.length > 0;
+        if(!hasRows) {
+          this.resultsData = null;
+          this.disable('Run the time tracker for a period with events to enable the Invoice Builder.');
+          return;
+        }
+        this.resultsData = {
+          summaryData: resultsData.summaryData,
+          eventsData: resultsData.eventsData.slice(),
+        };
+        if(this.fieldset) {
+          this.fieldset.disabled = false;
+        }
+        if(this.statusMessageElement) {
+          this.statusMessageElement.textContent = 'Invoice Builder is ready. Update the fields and generate the invoice.';
+        }
+        this.clearOutput();
+      }
+
+      async handleFormSubmit(event) {
+        event.preventDefault();
+        if(!this.resultsData || !Array.isArray(this.resultsData.eventsData) || this.resultsData.eventsData.length === 0) {
+          return;
+        }
+        const form = event.target;
+        const formData = new FormData(form);
+        const invoiceNumberRaw = (formData.get('invoiceNumber') || '').toString().trim();
+        const invoiceNumber = invoiceNumberRaw.length > 0 ? invoiceNumberRaw : '#1';
+        const clientInvoiceNumber = (formData.get('clientInvoiceNumber') || '').toString().trim();
+        try {
+          const templates = await this.loadTemplates();
+          const invoiceDate = new Date();
+          const dueDate = addDays(invoiceDate, INVOICE_DUE_DATE_OFFSET_DAYS);
+          const rows = this.prepareRows();
+          const totalCents = rows.reduce((sum, row) => sum + row.amountCents, 0);
+          const totalAmount = totalCents / 100;
+          const totalText = formatCurrency(totalAmount);
+          const pages = this.buildPages({
+            rows,
+            templates,
+            invoiceNumber,
+            clientInvoiceNumber,
+            invoiceDate,
+            dueDate,
+            totalAmountString: totalText,
+            totalCents,
+          });
+          this.renderPages(pages);
+        } catch (error) {
+          console.error('#InvoiceBuilderController.handleFormSubmit()', error);
+          presentError('Unable to generate the invoice. Please try again.');
+        }
+      }
+
+      async loadTemplates() {
+        if(this.templates) {
+          return this.templates;
+        }
+        if(!this.templatePromise) {
+          this.templatePromise = new Promise((resolve, reject) => {
+            google.script.run
+              .withSuccessHandler((templates) => {
+                this.templates = templates;
+                resolve(this.templates);
+              })
+              .withFailureHandler((error) => {
+                this.templatePromise = null;
+                reject(error);
+              })
+              .client_getInvoiceTemplates();
+          });
+        }
+        return this.templatePromise;
+      }
+
+      prepareRows() {
+        if(!this.resultsData) {
+          return [];
+        }
+        return this.resultsData.eventsData
+          .slice()
+          .sort((a, b) => (new Date(a.start)) - (new Date(b.start)))
+          .map((eventData) => this.transformEvent(eventData));
+      }
+
+      transformEvent(eventData) {
+        const title = (eventData.title || '').trim();
+        const startDate = new Date(eventData.start);
+        const hours = roundToTwo(eventData.hours);
+        const amountCents = Math.round(hours * RATE_PER_HOUR * 100);
+        const amount = amountCents / 100;
+        return {
+          rawTitle: title,
+          truncatedTitle: this.truncateDescription(title),
+          dateText: formatInvoiceRowDate(startDate),
+          startTimeText: formatInvoiceRowTime(startDate),
+          hoursText: formatHours(hours),
+          amountText: formatCurrency(amount),
+          amountCents,
+        };
+      }
+
+      truncateDescription(text) {
+        if(!text) {
+          return '';
+        }
+        if(!this.measureContext) {
+          const MAX_CHARACTERS = 48;
+          return text.length <= MAX_CHARACTERS ? text : `${text.slice(0, MAX_CHARACTERS)}...`;
+        }
+        this.measureContext.font = this.canvasFont;
+        if(this.measureContext.measureText(text).width <= INVOICE_DESCRIPTION_MAX_WIDTH) {
+          return text;
+        }
+        let truncated = text;
+        const suffix = '...';
+        while(truncated.length > 0 && this.measureContext.measureText(truncated + suffix).width > INVOICE_DESCRIPTION_MAX_WIDTH) {
+          truncated = truncated.slice(0, -1);
+        }
+        return truncated.length ? truncated + suffix : suffix;
+      }
+
+      buildPages({ rows, templates, invoiceNumber, clientInvoiceNumber, invoiceDate, dueDate, totalAmountString, totalCents }) {
+        const pagesConfig = this.partitionRows(rows);
+        const totalPages = pagesConfig.length;
+        return pagesConfig.map((pageConfig, index) => {
+          const isLastPage = (index === totalPages - 1);
+          const templateString = isLastPage ? templates.pageWithTotals : templates.pageWithoutTotals;
+          const svgElement = this.populatePage({
+            templateString,
+            rows: pageConfig.rows,
+            pageNumber: index + 1,
+            totalPages,
+            invoiceNumber,
+            clientInvoiceNumber,
+            invoiceDate,
+            dueDate,
+            totalAmountString,
+            includeTotals: isLastPage,
+            totalCents,
+          });
+          return svgElement;
+        });
+      }
+
+      partitionRows(rows) {
+        const remainingRows = rows.slice();
+        const pages = [];
+        while(remainingRows.length > MAX_ROWS_PER_TOTALS_PAGE) {
+          let chunkSize = MAX_ROWS_PER_STANDARD_PAGE;
+          let remainderAfterChunk = remainingRows.length - chunkSize;
+
+          if(remainderAfterChunk > MAX_ROWS_PER_TOTALS_PAGE) {
+            // Keep chunkSize at MAX_ROWS_PER_STANDARD_PAGE to leave another standard page.
+          } else if(remainderAfterChunk === 0) {
+            chunkSize = Math.max(1, chunkSize - 1);
+            remainderAfterChunk = remainingRows.length - chunkSize;
+          } else if(remainderAfterChunk < 0) {
+            chunkSize = remainingRows.length - MAX_ROWS_PER_TOTALS_PAGE;
+          }
+
+          if(chunkSize <= 0 || chunkSize > remainingRows.length) {
+            break;
+          }
+
+          pages.push({
+            rows: remainingRows.splice(0, chunkSize),
+          });
+        }
+
+        if(remainingRows.length > 0) {
+          pages.push({
+            rows: remainingRows.splice(0),
+          });
+        }
+
+        return pages;
+      }
+
+      populatePage({ templateString, rows, pageNumber, totalPages, invoiceNumber, clientInvoiceNumber, invoiceDate, dueDate, totalAmountString, includeTotals, totalCents }) {
+        if(!templateString) {
+          throw new Error('#InvoiceBuilderController.populatePage() Missing template string');
+        }
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(templateString, 'image/svg+xml');
+        const parserError = doc.querySelector('parsererror');
+        if(parserError) {
+          throw new Error(`#InvoiceBuilderController.populatePage()
+          Failed to parse SVG template. ${parserError.textContent}`);
+        }
+        const svgElement = doc.documentElement;
+        this.setTextContent(doc, 'pageValue', `Page ${pageNumber} of ${totalPages}`);
+        this.setTextContent(doc, 'invoiceNumberValue', invoiceNumber);
+        this.setTextContent(doc, 'clientInvoiceNumberContainerValue', clientInvoiceNumber || '');
+        const invoiceDateText = formatInvoiceHeaderDate(invoiceDate);
+        const dueDateText = formatInvoiceHeaderDate(dueDate);
+        this.setTextContent(doc, 'invoiceDataValue', invoiceDateText);
+        this.setTextContent(doc, 'dueDataValue', dueDateText);
+        this.setTextContent(doc, 'invoiceOfValue', totalAmountString);
+        if(includeTotals) {
+          const subtotalText = formatCurrency(totalCents / 100);
+          this.setTextContent(doc, 'subtotalValue', subtotalText);
+          this.setTextContent(doc, 'totalValue', subtotalText);
+          this.setTextContent(doc, 'taxValue', TAX_DISPLAY_VALUE);
+        }
+        this.populateRows(doc, rows);
+        this.prefixIds(svgElement, `invoicePage${pageNumber}`);
+        return document.importNode(svgElement, true);
+      }
+
+      populateRows(doc, rows) {
+        const rowsContainer = doc.getElementById('Rows') || doc.getElementById('rowsContainer');
+        if(!rowsContainer) {
+          throw new Error('#InvoiceBuilderController.populateRows() Missing rows container in SVG template');
+        }
+        const lightTemplate = rowsContainer.querySelector('#rowContainer_light');
+        const darkTemplate = rowsContainer.querySelector('#rowContainer__dark');
+        if(!lightTemplate || !darkTemplate) {
+          throw new Error('#InvoiceBuilderController.populateRows() Missing row templates in SVG');
+        }
+        const lightTemplateClone = lightTemplate.cloneNode(true);
+        const darkTemplateClone = darkTemplate.cloneNode(true);
+        rowsContainer.replaceChildren();
+        rows.forEach((row, index) => {
+          const template = (index % 2 === 0 ? lightTemplateClone : darkTemplateClone).cloneNode(true);
+          const baselineY = ROW_BASELINE_START_Y + (index * ROW_VERTICAL_SPACING);
+          this.setRowText(template, 'dateValue', row.dateText, baselineY);
+          this.setRowText(template, 'descriptionValue', row.truncatedTitle, baselineY);
+          this.setRowText(template, 'hoursValue', row.hoursText, baselineY);
+          this.setRowText(template, 'startTimeValue', row.startTimeText, baselineY);
+          this.setRowText(template, 'rateValue', RATE_DISPLAY_VALUE, baselineY);
+          this.setRowText(template, 'amountValue', row.amountText, baselineY);
+          this.adjustRowBackground(template, baselineY);
+          rowsContainer.appendChild(template);
+        });
+      }
+
+      setRowText(rowGroup, idPrefix, value, baselineY) {
+        const element = rowGroup.querySelector(`[id^="${idPrefix}"]`);
+        this.setElementText(element, value);
+        this.setElementPosition(element, baselineY);
+      }
+
+      setTextContent(doc, id, value) {
+        const element = doc.getElementById(id);
+        this.setElementText(element, value);
+      }
+
+      prefixIds(rootElement, prefix) {
+        const elementsWithId = rootElement.querySelectorAll('[id]');
+        elementsWithId.forEach((element) => {
+          element.id = `${prefix}_${element.id}`;
+        });
+      }
+
+      setElementText(element, value) {
+        if(!element) {
+          return;
+        }
+        const tspans = element.tagName.toLowerCase() === 'tspan'
+          ? [element]
+          : Array.from(element.querySelectorAll('tspan'));
+        if(tspans.length > 0) {
+          const stringValue = (value ?? '').toString();
+          if(tspans.length === 1) {
+            tspans[0].textContent = stringValue;
+          } else {
+            const segments = stringValue.split('\n');
+            tspans.forEach((span, index) => {
+              span.textContent = segments[index] ?? '';
+            });
+          }
+        } else {
+          element.textContent = value ?? '';
+        }
+      }
+
+      setElementPosition(element, baselineY) {
+        if(!element || typeof baselineY !== 'number' || Number.isNaN(baselineY)) {
+          return;
+        }
+        const tspans = element.tagName.toLowerCase() === 'tspan'
+          ? [element]
+          : Array.from(element.querySelectorAll('tspan'));
+        if(tspans.length > 0) {
+          tspans.forEach((span, index) => {
+            const yValue = baselineY + (index * ROW_MULTILINE_LINE_HEIGHT);
+            span.setAttribute('y', yValue.toFixed(3));
+          });
+        } else if(element.hasAttribute('y')) {
+          element.setAttribute('y', baselineY.toFixed(3));
+        }
+      }
+
+      adjustRowBackground(rowGroup, baselineY) {
+        const backgroundRect = rowGroup.querySelector('rect');
+        if(!backgroundRect || typeof baselineY !== 'number' || Number.isNaN(baselineY)) {
+          return;
+        }
+        const transform = backgroundRect.getAttribute('transform');
+        const match = transform?.match(/translate\(\s*([-\d.]+)[ ,]+([-\d.]+)\s*\)/);
+        if(!match) {
+          return;
+        }
+        const x = parseFloat(match[1]);
+        const newY = baselineY - DARK_ROW_RECT_VERTICAL_OFFSET;
+        backgroundRect.setAttribute('transform', `translate(${x} ${newY.toFixed(3)})`);
+      }
+
+      renderPages(pages) {
+        if(!this.outputElement) {
+          return;
+        }
+        this.outputElement.innerHTML = '';
+        pages.forEach((page) => {
+          this.outputElement.appendChild(page);
+        });
+      }
+    }
+
+    _invoiceBuilderController = new InvoiceBuilderController();
   </script>
 </body>
