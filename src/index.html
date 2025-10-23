@@ -149,6 +149,11 @@
       border-radius: 12.25px;
       background: white;
     }
+
+    #invoiceDownloadButton {
+      margin-top: 1rem;
+      width: fit-content;
+    }
   </style>
 </head>
 
@@ -215,6 +220,9 @@
         </form>
       </fieldset>
       <div id="invoiceOutput"></div>
+      <button id="invoiceDownloadButton" class="action cursor--hover-pointer display-none" onclick="handleInvoiceDownload(event)" disabled>
+        Download PDF
+      </button>
     </section>
     <div id="progressContainer" class="progress-container">
       <div class="progress-spinner"></div>
@@ -222,6 +230,8 @@
       <p id="progressAmount"></p>
     </div>
   </main>
+  <!-- INLINE_JSPDF -->
+  <!-- INLINE_SVG2PDF -->
   <script>
     class AppTable {
       constructor(tableElement, columns, data, caption) {
@@ -336,6 +346,21 @@
     const ROW_VERTICAL_SPACING = 17;
     const ROW_MULTILINE_LINE_HEIGHT = 12;
     const DARK_ROW_RECT_VERTICAL_OFFSET = 10.636;
+    const ROW_RIGHT_BOUNDARY_X = 563;
+    const ROW_RIGHT_PADDING = 4;
+    const SUMMARY_RIGHT_BOUNDARY_X = 563;
+    const SUMMARY_RIGHT_PADDING = 6;
+    const DEFAULT_PDF_FONT = 'Ubuntu';
+    const FONT_UBUNTU_REGULAR_BASE64 = 'INLINE_FONT_UBUNTU_REGULAR';
+    const FONT_UBUNTU_BOLD_BASE64 = 'INLINE_FONT_UBUNTU_BOLD';
+    const RIGHT_ALIGNED_IDS = [
+      'amountvalue',
+      'ratevalue',
+      'invoiceofvalue',
+      'subtotalvalue',
+      'totalvalue',
+      'taxvalue',
+    ];
     let _invoiceBuilderController = null;
 
     const _dtu_dateTimeUtils = new DateTimeUtils();
@@ -444,6 +469,13 @@
       event.preventDefault();
       if(_invoiceBuilderController) {
         _invoiceBuilderController.handleFormSubmit(event);
+      }
+    }
+
+    function handleInvoiceDownload(event) {
+      event.preventDefault();
+      if(_invoiceBuilderController) {
+        _invoiceBuilderController.handleDownloadClick(event);
       }
     }
 
@@ -759,12 +791,14 @@
         this.fieldset = document.getElementById('invoiceBuilderFieldset');
         this.statusMessageElement = document.getElementById('invoiceBuilderStatusMessage');
         this.outputElement = document.getElementById('invoiceOutput');
+        this.downloadButton = document.getElementById('invoiceDownloadButton');
         this.templates = null;
         this.templatePromise = null;
         this.resultsData = null;
         this.measureCanvas = document.createElement('canvas');
         this.measureContext = this.measureCanvas?.getContext('2d') ?? null;
         this.canvasFont = '600 10px "Inter", sans-serif';
+        this.lastInvoiceMetadata = null;
         this.disable('The Invoice Builder will be enabled after using the time tracker.');
       }
 
@@ -776,12 +810,15 @@
           this.statusMessageElement.textContent = message;
         }
         this.clearOutput();
+        this.setDownloadButtonState(false);
       }
 
       clearOutput() {
         if(this.outputElement) {
           this.outputElement.innerHTML = '';
         }
+        this.lastInvoiceMetadata = null;
+        this.setDownloadButtonState(false);
       }
 
       onResults(resultsData) {
@@ -832,6 +869,11 @@
             totalAmountString: totalText,
             totalCents,
           });
+          this.lastInvoiceMetadata = {
+            invoiceNumber,
+            clientInvoiceNumber,
+            invoiceDate,
+          };
           this.renderPages(pages);
         } catch (error) {
           console.error('#InvoiceBuilderController.handleFormSubmit()', error);
@@ -960,7 +1002,7 @@
             rows: remainingRows.splice(0),
           });
         }
-
+        this.redistributeRowsForLastPage(pages);
         return pages;
       }
 
@@ -1060,6 +1102,7 @@
         } else {
           element.textContent = value ?? '';
         }
+        this.applyRightAlignedFormatting(element, tspans);
       }
 
       setElementPosition(element, baselineY) {
@@ -1102,6 +1145,312 @@
         pages.forEach((page) => {
           this.outputElement.appendChild(page);
         });
+        this.setDownloadButtonState(pages && pages.length > 0);
+      }
+
+      setDownloadButtonState(isEnabled) {
+        if(!this.downloadButton) {
+          return;
+        }
+        if(isEnabled) {
+          this.downloadButton.disabled = false;
+          this.downloadButton.classList.remove('display-none');
+        } else {
+          this.downloadButton.disabled = true;
+          if(!this.outputElement || this.outputElement.childElementCount === 0) {
+            this.downloadButton.classList.add('display-none');
+          }
+        }
+      }
+
+      async handleDownloadClick() {
+        if(!this.outputElement || this.outputElement.childElementCount === 0) {
+          return;
+        }
+        if(this.downloadButton) {
+          this.downloadButton.disabled = true;
+        }
+        try {
+          await this.downloadInvoicePdf();
+        } catch (error) {
+          console.error('#InvoiceBuilderController.downloadInvoicePdf()', error);
+          presentError('Unable to download the invoice PDF. Please try again.');
+        } finally {
+          this.setDownloadButtonState(this.outputElement?.childElementCount > 0);
+        }
+      }
+
+      ensurePdfLibraries() {
+        const jsPdfNamespace = window.jspdf || window.jsPDF || window.jspPDF || {};
+        const jsPDFConstructor = jsPdfNamespace.jsPDF || window.jsPDF || window.jspPDF;
+        const svg2pdfNamespace = window.svg2pdf || window.SVG2PDF || window.svg2pdfjs || {};
+        const svg2pdfCandidates = [
+          svg2pdfNamespace,
+          svg2pdfNamespace.default,
+          svg2pdfNamespace.svg2pdf,
+          svg2pdfNamespace.SVG2PDF,
+          svg2pdfNamespace.svg2pdfjs,
+          window.svg2pdf,
+          window.svg2pdf?.svg2pdf,
+          window.svg2pdf?.default,
+          window.SVG2PDF,
+          window.svg2pdfjs,
+        ];
+        let svg2pdfFunction = svg2pdfCandidates.find((candidate) => typeof candidate === 'function');
+        if(!svg2pdfFunction && svg2pdfNamespace && typeof svg2pdfNamespace === 'object') {
+          const nestedCandidates = Object.values(svg2pdfNamespace)
+            .flatMap((value) => (typeof value === 'object' ? [value, value?.default, value?.svg2pdf, value?.SVG2PDF] : [value]));
+          svg2pdfFunction = nestedCandidates.find((value) => typeof value === 'function') ?? svg2pdfFunction;
+        }
+        if(typeof jsPDFConstructor !== 'function' || typeof svg2pdfFunction !== 'function') {
+          const details = JSON.stringify({
+            jspdfKeys: Object.keys(window).filter((key) => key.toLowerCase().includes('jspdf') || key.toLowerCase() === 'jspdf'),
+            svg2pdfKeys: Object.keys(window).filter((key) => key.toLowerCase().includes('svg2pdf')),
+            svg2pdfNamespaceKeys: Object.keys(svg2pdfNamespace || {}),
+            typeofJsPdfConstructor: typeof jsPDFConstructor,
+            typeofSvg2pdf: typeof svg2pdfFunction,
+            svg2pdfNamespaceType: typeof svg2pdfNamespace,
+            svg2pdfNamespaceEntries: Object.entries(svg2pdfNamespace || {}).map(([key, value]) => `${key}:${typeof value}`),
+          }, null, 2);
+          throw new Error(`PDF libraries are not loaded. Debug: ${details}`);
+        }
+        return { jsPDFConstructor, svg2pdf: svg2pdfFunction };
+      }
+
+      async downloadInvoicePdf() {
+        const svgElements = Array.from(this.outputElement?.querySelectorAll('svg') || []);
+        if(svgElements.length === 0) {
+          throw new Error('No invoice pages available to export.');
+        }
+        console.log('#InvoiceBuilderController.downloadInvoicePdf() start');
+        const { jsPDFConstructor, svg2pdf } = this.ensurePdfLibraries();
+        const pageWidth = 595;
+        const pageHeight = 842;
+        const doc = new jsPDFConstructor({
+          unit: 'pt',
+          format: [pageWidth, pageHeight],
+          orientation: 'portrait',
+          hotfixes: ['px_scaling'],
+        });
+        const defaultFontName = this.registerPdfFonts(doc);
+        const defaultFont = this.applyFontHotfix(doc, defaultFontName);
+        console.log('#InvoiceBuilderController.downloadInvoicePdf() svgElements', svgElements.length);
+        for(const [index, svgElement] of svgElements.entries()) {
+          console.log(`#InvoiceBuilderController.downloadInvoicePdf() processing page ${index + 1}`);
+          if(index > 0) {
+            doc.addPage([pageWidth, pageHeight], 'portrait');
+            doc.setPage(index + 1);
+          }
+          const clonedSvg = svgElement.cloneNode(true);
+          clonedSvg.setAttribute('width', `${pageWidth}`);
+          clonedSvg.setAttribute('height', `${pageHeight}`);
+          this.normalizeSvgFonts(clonedSvg, defaultFont);
+          const options = {
+            x: 0,
+            y: 0,
+            width: pageWidth,
+            height: pageHeight,
+            useCSS: true,
+            assumePt: true,
+          };
+          console.log('#InvoiceBuilderController.downloadInvoicePdf() svg2pdf options', options);
+          try {
+            await Promise.resolve(svg2pdf(clonedSvg, doc, options));
+            console.log(`#InvoiceBuilderController.downloadInvoicePdf() svg2pdf finished page ${index + 1}`);
+          } catch (error) {
+            console.error(`#InvoiceBuilderController.downloadInvoicePdf() svg2pdf error on page ${index + 1}`, error);
+            throw error;
+          }
+        }
+        console.log('#InvoiceBuilderController.downloadInvoicePdf() saving PDF');
+        doc.save(this.buildPdfFilename());
+        console.log('#InvoiceBuilderController.downloadInvoicePdf() complete');
+      }
+
+      buildPdfFilename() {
+        const rawInvoiceNumber = (this.lastInvoiceMetadata?.invoiceNumber || 'invoice').toString();
+        const sanitizedInvoiceNumber = rawInvoiceNumber.replace(/\s+/g, '_').replace(/[^\w.-]/g, '');
+        const invoiceDate = this.lastInvoiceMetadata?.invoiceDate instanceof Date
+          ? this.formatDateForFilename(this.lastInvoiceMetadata.invoiceDate)
+          : null;
+        const baseName = sanitizedInvoiceNumber.length > 0 ? sanitizedInvoiceNumber : 'invoice';
+        return invoiceDate ? `${baseName}-${invoiceDate}.pdf` : `${baseName}.pdf`;
+      }
+
+      formatDateForFilename(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      registerPdfFonts(doc) {
+        try {
+          const fontList = doc.getFontList?.() || {};
+          if(!fontList[DEFAULT_PDF_FONT]) {
+            if(FONT_UBUNTU_REGULAR_BASE64 && FONT_UBUNTU_BOLD_BASE64) {
+              doc.addFileToVFS(`${DEFAULT_PDF_FONT}-Regular.ttf`, FONT_UBUNTU_REGULAR_BASE64);
+              doc.addFont(`${DEFAULT_PDF_FONT}-Regular.ttf`, DEFAULT_PDF_FONT, 'normal');
+              doc.addFileToVFS(`${DEFAULT_PDF_FONT}-Bold.ttf`, FONT_UBUNTU_BOLD_BASE64);
+              doc.addFont(`${DEFAULT_PDF_FONT}-Bold.ttf`, DEFAULT_PDF_FONT, 'bold');
+              console.log(`#registerPdfFonts() Registered ${DEFAULT_PDF_FONT} fonts`);
+            }
+          }
+          return DEFAULT_PDF_FONT;
+        } catch (error) {
+          console.warn('#registerPdfFonts() failed, falling back to Helvetica', error);
+          return 'Helvetica';
+        }
+      }
+
+      applyFontHotfix(doc, preferredFont) {
+        let defaultFont = preferredFont || 'Helvetica';
+        try {
+          doc.getFont(defaultFont.toLowerCase(), 'normal');
+        } catch (error) {
+          const fontList = doc.getFontList?.() || {};
+          const firstFontKey = Object.keys(fontList)[0];
+          defaultFont = firstFontKey ?? 'Helvetica';
+        }
+        doc.setFont(defaultFont, 'normal');
+        return defaultFont;
+      }
+
+      normalizeSvgFonts(svgRoot, defaultFont) {
+        if(!svgRoot) {
+          return;
+        }
+        console.log('#InvoiceBuilderController.normalizeSvgFonts()', { defaultFont });
+        const elementsWithFontFamily = svgRoot.querySelectorAll('[font-family]');
+        elementsWithFontFamily.forEach((element) => {
+          element.setAttribute('font-family', defaultFont);
+        });
+        const elementsWithFontWeight = svgRoot.querySelectorAll('[font-weight]');
+        elementsWithFontWeight.forEach((element) => {
+          const weight = element.getAttribute('font-weight');
+          const normalized = this.getNormalizedFontWeight(weight);
+          if(normalized) {
+            element.setAttribute('font-weight', normalized);
+          }
+        });
+        const styledElements = svgRoot.querySelectorAll('[style], text');
+        styledElements.forEach((element) => {
+          const style = element.getAttribute('style');
+          if(!style) return;
+          const declarations = style.split(';').map((declaration) => declaration.trim()).filter(Boolean);
+          let hasFontFamily = false;
+          let hasFontWeight = false;
+          const updatedDeclarations = declarations.map((declaration) => {
+            const [property, value] = declaration.split(':').map((part) => part.trim());
+            if(!property) return null;
+            if(property.toLowerCase() === 'font-family') {
+              hasFontFamily = true;
+              return 'font-family: Helvetica';
+            }
+            if(property.toLowerCase() === 'font-weight') {
+              hasFontWeight = true;
+              return `font-weight: ${this.getNormalizedFontWeight(value) ?? '400'}`;
+            }
+            return `${property}: ${value}`;
+          }).filter(Boolean);
+          if(!hasFontFamily) {
+            updatedDeclarations.push(`font-family: ${defaultFont}`);
+          }
+          if(!hasFontWeight) {
+            updatedDeclarations.push('font-weight: 400');
+          }
+          element.setAttribute('style', updatedDeclarations.join('; '));
+        });
+      }
+
+      getNormalizedFontWeight(weightValue) {
+        if(!weightValue) {
+          return 'normal';
+        }
+        const normalizedLower = weightValue.toString().trim().toLowerCase();
+        if(normalizedLower === 'bold' || normalizedLower === '700') {
+          return 'bold';
+        }
+        if(normalizedLower === 'normal' || normalizedLower === '400') {
+          return 'normal';
+        }
+        const numericValue = parseInt(normalizedLower, 10);
+        if(Number.isFinite(numericValue)) {
+          return numericValue >= 600 ? 'bold' : 'normal';
+        }
+        return 'normal';
+      }
+
+      applyRightAlignedFormatting(element, cachedTspans) {
+        if(!element) {
+          return;
+        }
+        const elementId = (element.id || '').toLowerCase();
+        const shouldAlign = RIGHT_ALIGNED_IDS.some((idFragment) => elementId.includes(idFragment));
+        if(!shouldAlign) {
+          return;
+        }
+        const candidateSpans = cachedTspans && cachedTspans.length > 0
+          ? cachedTspans
+          : element.tagName.toLowerCase() === 'tspan'
+            ? [element]
+            : Array.from(element.querySelectorAll('tspan'));
+        const targets = candidateSpans.length > 0 ? candidateSpans : [element];
+        targets.forEach((span) => {
+          span.setAttribute('text-anchor', 'end');
+          const existingXAttr = span.getAttribute('x') ?? element.getAttribute('x');
+          const storedOriginal = span.dataset.invoiceOriginalX;
+          const originalX = Number.isFinite(Number(storedOriginal))
+            ? Number(storedOriginal)
+            : Number(existingXAttr);
+          if(Number.isFinite(originalX)) {
+            span.dataset.invoiceOriginalX = originalX;
+            const targetX = this.computeRightAlignedTargetX(elementId, originalX);
+            span.setAttribute('x', targetX.toFixed(3));
+          }
+        });
+      }
+
+      redistributeRowsForLastPage(pages) {
+        if(!Array.isArray(pages) || pages.length < 2) {
+          return;
+        }
+        const lastPage = pages[pages.length - 1];
+        if(!lastPage || !Array.isArray(lastPage.rows)) {
+          return;
+        }
+        let prevIndex = pages.length - 2;
+        while(lastPage.rows.length < MAX_ROWS_PER_TOTALS_PAGE && prevIndex >= 0) {
+          const previousPage = pages[prevIndex];
+          if(!previousPage || !Array.isArray(previousPage.rows) || previousPage.rows.length === 0) {
+            pages.splice(prevIndex, 1);
+            prevIndex = pages.length - 2;
+            continue;
+          }
+          const movedRow = previousPage.rows.pop();
+          if(movedRow) {
+            lastPage.rows.unshift(movedRow);
+          }
+          if(previousPage.rows.length === 0) {
+            pages.splice(prevIndex, 1);
+            prevIndex = pages.length - 2;
+          }
+        }
+      }
+
+      computeRightAlignedTargetX(elementId, originalX) {
+        if(elementId.includes('amountvalue') || elementId.includes('ratevalue')) {
+          return Math.min(originalX, ROW_RIGHT_BOUNDARY_X - ROW_RIGHT_PADDING);
+        }
+        if(
+          elementId.includes('invoiceofvalue')
+          || elementId.includes('subtotalvalue')
+          || elementId.includes('totalvalue')
+          || elementId.includes('taxvalue')
+        ) {
+          return Math.min(originalX, SUMMARY_RIGHT_BOUNDARY_X - SUMMARY_RIGHT_PADDING);
+        }
+        return originalX;
       }
     }
 

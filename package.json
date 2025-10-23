@@ -42,11 +42,18 @@
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-strip": "^3.0.4",
     "@rollup/plugin-terser": "^0.4.4",
+    "@types/google-apps-script": "^2.0.3",
     "cross-env": "^7.0.3",
     "rollup": "^4.50.2",
     "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-delete": "^3.0.1",
-    "typescript": "^5.6.3",
-    "@types/google-apps-script": "^2.0.3"
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@fontsource/roboto": "^5.2.8",
+    "html-void-elements": "^3.0.0",
+    "jspdf": "^3.0.3",
+    "roboto-fontface": "^0.10.0",
+    "svg2pdf.js": "^2.6.0"
   }
 }

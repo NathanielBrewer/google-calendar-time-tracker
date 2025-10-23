@@ -43,7 +43,26 @@ export default {
       targets: [
         { src: 'appsscript.json', dest: `dist/${environment}` },
         { src: '.clasp.json', dest: `dist/${environment}` },
-        { src: 'src/index.html', dest: `dist/${environment}` },
+        {
+          src: 'src/index.html',
+          dest: `dist/${environment}`,
+          transform: (contents) => {
+            const jspdfPath = path.resolve('node_modules', 'jspdf', 'dist', 'jspdf.umd.min.js');
+            const svg2pdfPath = path.resolve('node_modules', 'svg2pdf.js', 'dist', 'svg2pdf.umd.min.js');
+            const jspdfSource = fs.readFileSync(jspdfPath, 'utf8');
+            const svg2pdfSource = fs.readFileSync(svg2pdfPath, 'utf8');
+            const ubuntuRegularPath = path.resolve('assets', 'fonts', 'Ubuntu-R.ttf');
+            const ubuntuBoldPath = path.resolve('assets', 'fonts', 'Ubuntu-B.ttf');
+            const ubuntuRegularBase64 = fs.readFileSync(ubuntuRegularPath).toString('base64');
+            const ubuntuBoldBase64 = fs.readFileSync(ubuntuBoldPath).toString('base64');
+            return contents
+              .toString()
+              .replace('<!-- INLINE_JSPDF -->', `<script>${jspdfSource}</script>`)
+              .replace('<!-- INLINE_SVG2PDF -->', `<script>${svg2pdfSource}</script>`)
+              .replace('INLINE_FONT_UBUNTU_REGULAR', ubuntuRegularBase64)
+              .replace('INLINE_FONT_UBUNTU_BOLD', ubuntuBoldBase64);
+          }
+        },
         {
           src: 'src/invoice-builder/pageWithTotals.svg',
           dest: `dist/${environment}/invoice-builder`,
