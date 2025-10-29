@@ -353,6 +353,15 @@
     const DEFAULT_PDF_FONT = 'Ubuntu';
     const FONT_UBUNTU_REGULAR_BASE64 = 'INLINE_FONT_UBUNTU_REGULAR';
     const FONT_UBUNTU_BOLD_BASE64 = 'INLINE_FONT_UBUNTU_BOLD';
+    // Manual right-alignment X adjustments for specific invoice fields.
+    const RIGHT_ALIGNMENT_X_OFFSET_OVERRIDES = [
+      { idFragment: 'amountvalue', offset: 23 },
+      { idFragment: 'ratevalue', offset: 22 },
+      { idFragment: 'invoiceofvalue', offset: 85 },
+      { idFragment: 'subtotalvalue', offset: 23 },
+      { idFragment: 'totalvalue', offset: 23 },
+      { idFragment: 'taxvalue', offset: 10 },
+    ];
     const RIGHT_ALIGNED_IDS = [
       'amountvalue',
       'ratevalue',
@@ -973,37 +982,59 @@
       }
 
       partitionRows(rows) {
-        const remainingRows = rows.slice();
+        if(!Array.isArray(rows) || rows.length === 0) {
+          return [];
+        }
+        const totalRows = rows.length;
+        if(totalRows <= MAX_ROWS_PER_TOTALS_PAGE) {
+          return [
+            {
+              rows: rows.slice(),
+            },
+          ];
+        }
+
+        const maxLastPageRows = Math.min(MAX_ROWS_PER_TOTALS_PAGE, totalRows);
+        let bestLastPageRows = 1;
+        // Choose a totals-page size that keeps standard pages as full as possible while respecting limits.
+        let bestScore = this.computeStandardPageRemainderScore(totalRows - bestLastPageRows);
+
+        for(let candidate = 2; candidate <= maxLastPageRows; candidate += 1) {
+          const remaining = totalRows - candidate;
+          const score = this.computeStandardPageRemainderScore(remaining);
+          if(score > bestScore) {
+            bestLastPageRows = candidate;
+            bestScore = score;
+          }
+        }
+
         const pages = [];
-        while(remainingRows.length > MAX_ROWS_PER_TOTALS_PAGE) {
-          let chunkSize = MAX_ROWS_PER_STANDARD_PAGE;
-          let remainderAfterChunk = remainingRows.length - chunkSize;
-
-          if(remainderAfterChunk > MAX_ROWS_PER_TOTALS_PAGE) {
-            // Keep chunkSize at MAX_ROWS_PER_STANDARD_PAGE to leave another standard page.
-          } else if(remainderAfterChunk === 0) {
-            chunkSize = Math.max(1, chunkSize - 1);
-            remainderAfterChunk = remainingRows.length - chunkSize;
-          } else if(remainderAfterChunk < 0) {
-            chunkSize = remainingRows.length - MAX_ROWS_PER_TOTALS_PAGE;
-          }
-
-          if(chunkSize <= 0 || chunkSize > remainingRows.length) {
-            break;
-          }
-
+        let cursor = 0;
+        let standardRowsRemaining = totalRows - bestLastPageRows;
+        while(standardRowsRemaining > 0) {
+          const chunkSize = Math.min(MAX_ROWS_PER_STANDARD_PAGE, standardRowsRemaining);
           pages.push({
-            rows: remainingRows.splice(0, chunkSize),
+            rows: rows.slice(cursor, cursor + chunkSize),
           });
+          cursor += chunkSize;
+          standardRowsRemaining -= chunkSize;
         }
 
-        if(remainingRows.length > 0) {
+        const lastPageRows = rows.slice(cursor);
+        if(lastPageRows.length > 0) {
           pages.push({
-            rows: remainingRows.splice(0),
+            rows: lastPageRows,
           });
         }
-        this.redistributeRowsForLastPage(pages);
         return pages;
+      }
+
+      computeStandardPageRemainderScore(remainingRows) {
+        if(remainingRows <= 0) {
+          return MAX_ROWS_PER_STANDARD_PAGE;
+        }
+        const remainder = remainingRows % MAX_ROWS_PER_STANDARD_PAGE;
+        return remainder === 0 ? MAX_ROWS_PER_STANDARD_PAGE : remainder;
       }
 
       populatePage({ templateString, rows, pageNumber, totalPages, invoiceNumber, clientInvoiceNumber, invoiceDate, dueDate, totalAmountString, includeTotals, totalCents }) {
@@ -1411,46 +1442,30 @@
         });
       }
 
-      redistributeRowsForLastPage(pages) {
-        if(!Array.isArray(pages) || pages.length < 2) {
-          return;
-        }
-        const lastPage = pages[pages.length - 1];
-        if(!lastPage || !Array.isArray(lastPage.rows)) {
-          return;
-        }
-        let prevIndex = pages.length - 2;
-        while(lastPage.rows.length < MAX_ROWS_PER_TOTALS_PAGE && prevIndex >= 0) {
-          const previousPage = pages[prevIndex];
-          if(!previousPage || !Array.isArray(previousPage.rows) || previousPage.rows.length === 0) {
-            pages.splice(prevIndex, 1);
-            prevIndex = pages.length - 2;
-            continue;
-          }
-          const movedRow = previousPage.rows.pop();
-          if(movedRow) {
-            lastPage.rows.unshift(movedRow);
-          }
-          if(previousPage.rows.length === 0) {
-            pages.splice(prevIndex, 1);
-            prevIndex = pages.length - 2;
-          }
-        }
-      }
-
       computeRightAlignedTargetX(elementId, originalX) {
+        let targetX = originalX;
         if(elementId.includes('amountvalue') || elementId.includes('ratevalue')) {
-          return Math.min(originalX, ROW_RIGHT_BOUNDARY_X - ROW_RIGHT_PADDING);
-        }
-        if(
+          targetX = Math.min(originalX, ROW_RIGHT_BOUNDARY_X - ROW_RIGHT_PADDING);
+        } else if(
           elementId.includes('invoiceofvalue')
           || elementId.includes('subtotalvalue')
           || elementId.includes('totalvalue')
           || elementId.includes('taxvalue')
         ) {
-          return Math.min(originalX, SUMMARY_RIGHT_BOUNDARY_X - SUMMARY_RIGHT_PADDING);
+          targetX = Math.min(originalX, SUMMARY_RIGHT_BOUNDARY_X - SUMMARY_RIGHT_PADDING);
         }
-        return originalX;
+        const rightAlignmentOffset = this.getRightAlignmentOffset(elementId)
+        console.log('elementId=' + elementId + ', rightAlignmentOffset=' + rightAlignmentOffset);
+        return targetX + this.getRightAlignmentOffset(elementId);
+      }
+
+      getRightAlignmentOffset(elementId) {
+        if(!elementId) {
+          return 0;
+        }
+        const lowerId = elementId.toLowerCase();
+        const override = RIGHT_ALIGNMENT_X_OFFSET_OVERRIDES.find(({ idFragment }) => lowerId.includes(idFragment));
+        return override?.offset ?? 0;
       }
     }
 
