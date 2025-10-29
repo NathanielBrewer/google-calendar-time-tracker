@@ -150,9 +150,14 @@
       background: white;
     }
 
-    #invoiceDownloadButton {
+    #invoiceDownloadButton,
+    #invoiceDownloadSvgButton {
       margin-top: 1rem;
       width: fit-content;
+    }
+
+    #invoiceDownloadSvgButton {
+      margin-left: .75rem;
     }
   </style>
 </head>
@@ -222,6 +227,9 @@
       <div id="invoiceOutput"></div>
       <button id="invoiceDownloadButton" class="action cursor--hover-pointer display-none" onclick="handleInvoiceDownload(event)" disabled>
         Download PDF
+      </button>
+      <button id="invoiceDownloadSvgButton" class="action cursor--hover-pointer display-none" onclick="handleInvoiceSvgDownload(event)" disabled>
+        Download SVG
       </button>
     </section>
     <div id="progressContainer" class="progress-container">
@@ -358,6 +366,7 @@
       { idFragment: 'amountvalue', offset: 23 },
       { idFragment: 'ratevalue', offset: 22 },
       { idFragment: 'invoiceofvalue', offset: 85 },
+      { idFragment: 'totalhoursvalue', offset: 23 },
       { idFragment: 'subtotalvalue', offset: 23 },
       { idFragment: 'totalvalue', offset: 23 },
       { idFragment: 'taxvalue', offset: 10 },
@@ -366,6 +375,7 @@
       'amountvalue',
       'ratevalue',
       'invoiceofvalue',
+      'totalhoursvalue',
       'subtotalvalue',
       'totalvalue',
       'taxvalue',
@@ -485,6 +495,13 @@
       event.preventDefault();
       if(_invoiceBuilderController) {
         _invoiceBuilderController.handleDownloadClick(event);
+      }
+    }
+
+    function handleInvoiceSvgDownload(event) {
+      event.preventDefault();
+      if(_invoiceBuilderController) {
+        _invoiceBuilderController.handleSvgDownloadClick(event);
       }
     }
 
@@ -801,6 +818,7 @@
         this.statusMessageElement = document.getElementById('invoiceBuilderStatusMessage');
         this.outputElement = document.getElementById('invoiceOutput');
         this.downloadButton = document.getElementById('invoiceDownloadButton');
+        this.downloadSvgButton = document.getElementById('invoiceDownloadSvgButton');
         this.templates = null;
         this.templatePromise = null;
         this.resultsData = null;
@@ -868,6 +886,18 @@
           const totalCents = rows.reduce((sum, row) => sum + row.amountCents, 0);
           const totalAmount = totalCents / 100;
           const totalText = formatCurrency(totalAmount);
+          const summaryTotalHours = Number(this.resultsData?.summaryData?.totalHours);
+          let totalHoursValue = Number.isFinite(summaryTotalHours) ? summaryTotalHours : NaN;
+          if(!Number.isFinite(totalHoursValue)) {
+            totalHoursValue = (this.resultsData?.eventsData || []).reduce((sum, event) => {
+              const hours = Number(event?.hours);
+              return sum + (Number.isFinite(hours) ? hours : 0);
+            }, 0);
+          }
+          if(!Number.isFinite(totalHoursValue)) {
+            totalHoursValue = 0;
+          }
+          const totalHoursString = formatHours(totalHoursValue);
           const pages = this.buildPages({
             rows,
             templates,
@@ -877,6 +907,7 @@
             dueDate,
             totalAmountString: totalText,
             totalCents,
+            totalHoursString,
           });
           this.lastInvoiceMetadata = {
             invoiceNumber,
@@ -958,7 +989,7 @@
         return truncated.length ? truncated + suffix : suffix;
       }
 
-      buildPages({ rows, templates, invoiceNumber, clientInvoiceNumber, invoiceDate, dueDate, totalAmountString, totalCents }) {
+      buildPages({ rows, templates, invoiceNumber, clientInvoiceNumber, invoiceDate, dueDate, totalAmountString, totalCents, totalHoursString }) {
         const pagesConfig = this.partitionRows(rows);
         const totalPages = pagesConfig.length;
         return pagesConfig.map((pageConfig, index) => {
@@ -976,6 +1007,7 @@
             totalAmountString,
             includeTotals: isLastPage,
             totalCents,
+            totalHoursString,
           });
           return svgElement;
         });
@@ -1037,7 +1069,7 @@
         return remainder === 0 ? MAX_ROWS_PER_STANDARD_PAGE : remainder;
       }
 
-      populatePage({ templateString, rows, pageNumber, totalPages, invoiceNumber, clientInvoiceNumber, invoiceDate, dueDate, totalAmountString, includeTotals, totalCents }) {
+      populatePage({ templateString, rows, pageNumber, totalPages, invoiceNumber, clientInvoiceNumber, invoiceDate, dueDate, totalAmountString, includeTotals, totalCents, totalHoursString }) {
         if(!templateString) {
           throw new Error('#InvoiceBuilderController.populatePage() Missing template string');
         }
@@ -1062,6 +1094,9 @@
           this.setTextContent(doc, 'subtotalValue', subtotalText);
           this.setTextContent(doc, 'totalValue', subtotalText);
           this.setTextContent(doc, 'taxValue', TAX_DISPLAY_VALUE);
+          if(typeof totalHoursString === 'string') {
+            this.setTextContent(doc, 'totalHoursValue', totalHoursString);
+          }
         }
         this.populateRows(doc, rows);
         this.prefixIds(svgElement, `invoicePage${pageNumber}`);
@@ -1180,18 +1215,22 @@
       }
 
       setDownloadButtonState(isEnabled) {
-        if(!this.downloadButton) {
+        const buttons = [this.downloadButton, this.downloadSvgButton].filter(Boolean);
+        if(buttons.length === 0) {
           return;
         }
-        if(isEnabled) {
-          this.downloadButton.disabled = false;
-          this.downloadButton.classList.remove('display-none');
-        } else {
-          this.downloadButton.disabled = true;
-          if(!this.outputElement || this.outputElement.childElementCount === 0) {
-            this.downloadButton.classList.add('display-none');
+        const hasOutput = !!this.outputElement && this.outputElement.childElementCount > 0;
+        buttons.forEach((button) => {
+          if(isEnabled) {
+            button.disabled = false;
+            button.classList.remove('display-none');
+          } else {
+            button.disabled = true;
+            if(!hasOutput) {
+              button.classList.add('display-none');
+            }
           }
-        }
+        });
       }
 
       async handleDownloadClick() {
@@ -1201,6 +1240,9 @@
         if(this.downloadButton) {
           this.downloadButton.disabled = true;
         }
+        if(this.downloadSvgButton) {
+          this.downloadSvgButton.disabled = true;
+        }
         try {
           await this.downloadInvoicePdf();
         } catch (error) {
@@ -1208,6 +1250,77 @@
           presentError('Unable to download the invoice PDF. Please try again.');
         } finally {
           this.setDownloadButtonState(this.outputElement?.childElementCount > 0);
+        }
+      }
+
+      async handleSvgDownloadClick() {
+        if(!this.outputElement || this.outputElement.childElementCount === 0) {
+          return;
+        }
+        if(this.downloadSvgButton) {
+          this.downloadSvgButton.disabled = true;
+        }
+        if(this.downloadButton) {
+          this.downloadButton.disabled = true;
+        }
+        try {
+          await this.downloadInvoiceSvg();
+        } catch (error) {
+          console.error('#InvoiceBuilderController.downloadInvoiceSvg()', error);
+          presentError('Unable to download the invoice SVG files. Please try again.');
+        } finally {
+          this.setDownloadButtonState(this.outputElement?.childElementCount > 0);
+        }
+      }
+
+      async downloadInvoiceSvg() {
+        const svgElements = Array.from(this.outputElement?.querySelectorAll('svg') || []);
+        if(svgElements.length === 0) {
+          throw new Error('No invoice pages available to export.');
+        }
+        const serializer = new XMLSerializer();
+        const totalPages = svgElements.length;
+        svgElements.forEach((svgElement, index) => {
+          const clone = svgElement.cloneNode(true);
+          this.prepareSvgForDownload(clone);
+          const serialized = serializer.serializeToString(clone);
+          const svgContent = `<?xml version="1.0" encoding="UTF-8"?>\n${serialized}`;
+          const filename = this.buildSvgFilename(index + 1, totalPages);
+          this.triggerSvgDownload(svgContent, filename);
+        });
+      }
+
+      prepareSvgForDownload(svgElement) {
+        if(!svgElement || typeof svgElement.setAttribute !== 'function') {
+          return;
+        }
+        svgElement.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        svgElement.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+        svgElement.setAttribute('width', '595');
+        svgElement.setAttribute('height', '842');
+        if(!svgElement.getAttribute('viewBox')) {
+          svgElement.setAttribute('viewBox', '0 0 595 842');
+        }
+      }
+
+      triggerSvgDownload(svgContent, filename) {
+        const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        const cleanup = () => {
+          if(link.parentNode) {
+            link.parentNode.removeChild(link);
+          }
+          URL.revokeObjectURL(url);
+        };
+        if(typeof requestAnimationFrame === 'function') {
+          requestAnimationFrame(cleanup);
+        } else {
+          setTimeout(cleanup, 0);
         }
       }
 
@@ -1298,14 +1411,28 @@
         console.log('#InvoiceBuilderController.downloadInvoicePdf() complete');
       }
 
+      buildSvgFilename(pageNumber, totalPages) {
+        const filenameBase = this.getInvoiceFilenameBase();
+        if(totalPages > 1) {
+          const pageSuffix = String(pageNumber).padStart(2, '0');
+          return `${filenameBase}-page-${pageSuffix}.svg`;
+        }
+        return `${filenameBase}.svg`;
+      }
+
       buildPdfFilename() {
+        const filenameBase = this.getInvoiceFilenameBase();
+        return `${filenameBase}.pdf`;
+      }
+
+      getInvoiceFilenameBase() {
         const rawInvoiceNumber = (this.lastInvoiceMetadata?.invoiceNumber || 'invoice').toString();
         const sanitizedInvoiceNumber = rawInvoiceNumber.replace(/\s+/g, '_').replace(/[^\w.-]/g, '');
         const invoiceDate = this.lastInvoiceMetadata?.invoiceDate instanceof Date
           ? this.formatDateForFilename(this.lastInvoiceMetadata.invoiceDate)
           : null;
         const baseName = sanitizedInvoiceNumber.length > 0 ? sanitizedInvoiceNumber : 'invoice';
-        return invoiceDate ? `${baseName}-${invoiceDate}.pdf` : `${baseName}.pdf`;
+        return invoiceDate ? `${baseName}-${invoiceDate}` : `${baseName}`;
       }
 
       formatDateForFilename(date) {
@@ -1421,6 +1548,15 @@
         if(!shouldAlign) {
           return;
         }
+        const targetTextElement = element?.tagName?.toLowerCase() === 'text'
+          ? element
+          : typeof element?.closest === 'function'
+            ? element.closest('text')
+            : null;
+        if(targetTextElement && typeof targetTextElement.setAttribute === 'function') {
+          targetTextElement.setAttribute('text-anchor', 'end');
+          this.ensureTextAnchorStyle(targetTextElement);
+        }
         const candidateSpans = cachedTspans && cachedTspans.length > 0
           ? cachedTspans
           : element.tagName.toLowerCase() === 'tspan'
@@ -1429,6 +1565,7 @@
         const targets = candidateSpans.length > 0 ? candidateSpans : [element];
         targets.forEach((span) => {
           span.setAttribute('text-anchor', 'end');
+          this.ensureTextAnchorStyle(span);
           const existingXAttr = span.getAttribute('x') ?? element.getAttribute('x');
           const storedOriginal = span.dataset.invoiceOriginalX;
           const originalX = Number.isFinite(Number(storedOriginal))
@@ -1438,6 +1575,9 @@
             span.dataset.invoiceOriginalX = originalX;
             const targetX = this.computeRightAlignedTargetX(elementId, originalX);
             span.setAttribute('x', targetX.toFixed(3));
+            if(targetTextElement && typeof targetTextElement.setAttribute === 'function') {
+              targetTextElement.setAttribute('x', targetX.toFixed(3));
+            }
           }
         });
       }
@@ -1448,14 +1588,13 @@
           targetX = Math.min(originalX, ROW_RIGHT_BOUNDARY_X - ROW_RIGHT_PADDING);
         } else if(
           elementId.includes('invoiceofvalue')
+          || elementId.includes('totalhoursvalue')
           || elementId.includes('subtotalvalue')
           || elementId.includes('totalvalue')
           || elementId.includes('taxvalue')
         ) {
           targetX = Math.min(originalX, SUMMARY_RIGHT_BOUNDARY_X - SUMMARY_RIGHT_PADDING);
         }
-        const rightAlignmentOffset = this.getRightAlignmentOffset(elementId)
-        console.log('elementId=' + elementId + ', rightAlignmentOffset=' + rightAlignmentOffset);
         return targetX + this.getRightAlignmentOffset(elementId);
       }
 
@@ -1466,6 +1605,22 @@
         const lowerId = elementId.toLowerCase();
         const override = RIGHT_ALIGNMENT_X_OFFSET_OVERRIDES.find(({ idFragment }) => lowerId.includes(idFragment));
         return override?.offset ?? 0;
+      }
+
+      ensureTextAnchorStyle(node) {
+        if(!node || typeof node.getAttribute !== 'function' || typeof node.setAttribute !== 'function') {
+          return;
+        }
+        const existingStyle = node.getAttribute('style') || '';
+        const anchorRegex = /(^|;)\s*text-anchor\s*:/i;
+        if(anchorRegex.test(existingStyle)) {
+          const updatedStyle = existingStyle.replace(/text-anchor\s*:[^;]*/gi, 'text-anchor: end');
+          node.setAttribute('style', updatedStyle);
+        } else {
+          const normalizedStyle = existingStyle.trim().replace(/;$/, '');
+          const suffix = normalizedStyle.length > 0 ? `${normalizedStyle}; text-anchor: end` : 'text-anchor: end';
+          node.setAttribute('style', suffix);
+        }
       }
     }
 

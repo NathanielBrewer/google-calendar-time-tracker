@@ -45,12 +45,11 @@
 </g>
 </g>
 <g id="Headers">
-<text id="HOURS" fill="#5E6470" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="8" font-weight="500" letter-spacing="0.04em"><tspan x="429" y="322.909">HOURS</tspan></text>
+<text id="HOURS" fill="#5E6470" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="8" font-weight="500" letter-spacing="0.04em"><tspan x="386" y="322.909">HOURS</tspan></text>
 <text id="Rate" fill="#5E6470" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="8" font-weight="500" letter-spacing="0.04em"><tspan x="482.938" y="322.909">RATE</tspan></text>
 <text id="Amount" fill="#5E6470" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="8" font-weight="500" letter-spacing="0.04em"><tspan x="525.384" y="322.909">AMOUNT</tspan></text>
 <text id="Date" fill="#5E6470" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="8" font-weight="500" letter-spacing="0.04em"><tspan x="32" y="322.909">DATE</tspan></text>
 <text id="Description" fill="#5E6470" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="8" font-weight="500" letter-spacing="0.04em"><tspan x="137" y="322.909">DESCRIPTION</tspan></text>
-<text id="Start Time" fill="#5E6470" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="8" font-weight="500" letter-spacing="0.04em"><tspan x="346" y="322.909">START TIME</tspan></text>
 <path id="Vector 145" d="M32 334H563" stroke="#D7DAE0" stroke-width="0.5"/>
 <path id="Vector 144" d="M32 306H563" stroke="#D7DAE0" stroke-width="0.5"/>
 </g>
@@ -59,8 +58,7 @@
 <g id="row">
 <text id="dateValue" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="600" letter-spacing="0em"><tspan x="32" y="364.636">Mon, Nov 18</tspan></text>
 <text id="descriptionValue" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="600" letter-spacing="0em"><tspan x="137" y="364.636">Documentation</tspan></text>
-<text id="hoursValue" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="429" y="364.636">1.5</tspan></text>
-<text id="startTimeValue" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="346" y="364.636">8:00 PM</tspan></text>
+<text id="hoursValue" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="386" y="364.636">1.5</tspan></text>
 <text id="rateValue" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="485.113" y="364.636">$28</tspan></text>
 <text id="amountValue" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="537.658" y="364.636">$280</tspan></text>
 </g>
@@ -70,8 +68,7 @@
 <g id="row_2">
 <text id="dateValue_2" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="600" letter-spacing="0em"><tspan x="32" y="347.636">Mon, Nov 18</tspan></text>
 <text id="descriptionValue_2" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="600" letter-spacing="0em"><tspan x="137" y="347.636">Documentation</tspan></text>
-<text id="hoursValue_2" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="429" y="347.636">1.5</tspan></text>
-<text id="startTimeValue_2" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="346" y="347.636">8:00 PM</tspan></text>
+<text id="hoursValue_2" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="386" y="347.636">1.5</tspan></text>
 <text id="rateValue_2" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="485.113" y="347.636">$28</tspan></text>
 <text id="amountValue_2" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="537.658" y="347.636">$280</tspan></text>
 </g>
@@ -79,13 +76,15 @@
 </g>
 <g id="pageWithTotals_2">
 <path id="Vector 147" d="M323 693L563 693" stroke="#D7DAE0" stroke-width="0.5"/>
+<text id="totalHoursValue" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="537.658" y="625.636">10</tspan></text>
 <text id="subtotalValue" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="537.658" y="651.636">$280</tspan></text>
 <text id="totalValue" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="bold" letter-spacing="0em"><tspan x="536.652" y="715.636">$280</tspan></text>
 <text id="taxValue" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="550.109" y="677.636">$0</tspan></text>
+<text id="Total hours" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="323" y="625.636">Total hours</tspan></text>
 <text id="Subtotal" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="323" y="651.636">Subtotal</tspan></text>
 <text id="Total" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="bold" letter-spacing="0em"><tspan x="323" y="715.636">Total</tspan></text>
 <text id="Tax" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="323" y="677.636">Tax</tspan></text>
-<path id="Vector 146" d="M32 626H563" stroke="#D7DAE0" stroke-width="0.5"/>
+<path id="Vector 146" d="M32 606H563" stroke="#D7DAE0" stroke-width="0.5"/>
 </g>
 </g>
 <g id="myAddressContainer">
