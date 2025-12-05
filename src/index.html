@@ -128,6 +128,10 @@
       line-height: 1.25;
     }
 
+    .invoice-remember-toggle {
+      margin: .5rem 0 1rem;
+    }
+
     #invoiceBuilderSection {
       margin-top: 2rem;
     }
@@ -159,6 +163,42 @@
     #invoiceDownloadSvgButton {
       margin-left: .75rem;
     }
+
+    #invoiceBuilderForm fieldset {
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    #invoiceBuilderForm fieldset legend {
+      font-weight: 600;
+      padding: 0 .25rem;
+    }
+
+    #invoiceBuilderForm textarea {
+      width: 100%;
+      box-sizing: border-box;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 4rem;
+    }
+
+    #invoiceBuilderForm ul {
+      display: grid;
+      row-gap: .75rem;
+    }
+
+    #invoiceBuilderForm fieldset:last-of-type {
+      margin-bottom: 0;
+    }
+
+    #invoiceBuilderForm label.required::after {
+      content: ' *';
+      color: var(--error-red);
+      font-weight: bold;
+    }
+
   </style>
 </head>
 
@@ -181,18 +221,18 @@
             <select name="calendars" id="calendarSelect" onchange="handleCalendarChange()" class="cursor--hover-pointer">
             </select>
           </li>
-          <li class="remember-calendar">
-            <label for="rememberCalendarCheckbox">Remember calendar choice</label>
-            <input id="rememberCalendarCheckbox" type="checkbox" onchange="handleRememberCalendarChange(event)" class="cursor--hover-pointer"/>
-            <div title="Save the calendar and autofill it next time" class="info-circle blue">i</div>
-          </li>
           <li>
             <label for="startDate">Start date (12:00 AM)</label>
             <input class="date-picker cursor--hover-pointer" type="date" id="startDate" name="startDate">
           </li>
           <li>
             <label for="endDate">End date (11:59 PM)</label>
-            <input class="date-picker cursor--hover-pointer" type="date" id="endData" name="endDate">
+            <input class="date-picker cursor--hover-pointer" type="date" id="endDate" name="endDate">
+          </li>
+          <li class="remember-calendar">
+            <label for="rememberCalendarCheckbox">Remember calendar information</label>
+            <input id="rememberCalendarCheckbox" type="checkbox" onchange="handleRememberCalendarChange(event)" class="cursor--hover-pointer"/>
+            <div title="Save the calendar and date range to autofill next time" class="info-circle blue">i</div>
           </li>
         </ul>
       </fieldset>
@@ -208,19 +248,99 @@
     </section>
     <section id="invoiceBuilderSection">
       <h2>Invoice Builder</h2>
+      <div class="remember-calendar invoice-remember-toggle">
+        <label for="rememberInvoiceInputsCheckbox">Remember invoice inputs</label>
+        <input id="rememberInvoiceInputsCheckbox" type="checkbox" class="cursor--hover-pointer"/>
+        <div title="Save all invoice fields and autofill them next time" class="info-circle blue">i</div>
+      </div>
       <p id="invoiceBuilderStatusMessage">The Invoice Builder will be enabled after using the time tracker.</p>
       <fieldset id="invoiceBuilderFieldset" disabled>
         <form id="invoiceBuilderForm" onsubmit="handleInvoiceFormSubmit(event)">
-          <ul>
-            <li>
-              <label for="clientInvoiceNumberInput">Client-provided invoice number</label>
-              <input id="clientInvoiceNumberInput" name="clientInvoiceNumber" type="text" placeholder="Optional">
-            </li>
-            <li>
-              <label for="invoiceNumberInput">Invoice number</label>
-              <input id="invoiceNumberInput" name="invoiceNumber" type="text" value="#1" placeholder="#1">
-            </li>
-          </ul>
+          <fieldset>
+            <legend>Invoice details</legend>
+            <ul>
+              <li>
+                <label for="clientInvoiceNumberInput">Client-provided Invoice ID</label>
+                <input id="clientInvoiceNumberInput" name="clientInvoiceNumber" type="text" autocomplete="off">
+              </li>
+              <li>
+                <label class="required" for="invoiceNumberInput">Invoice ID</label>
+                <input id="invoiceNumberInput" name="invoiceNumber" type="text" autocomplete="off" required>
+              </li>
+              <li>
+                <label class="required" for="rateInput">Hourly rate</label>
+                <input id="rateInput" name="rate" type="number" step="0.01" min="0" autocomplete="off" required>
+              </li>
+              <li>
+                <label for="taxRateInput">Tax rate (%)</label>
+                <input id="taxRateInput" name="taxRate" type="number" step="0.01" min="0" autocomplete="off">
+              </li>
+            </ul>
+          </fieldset>
+          <fieldset>
+            <legend>My business</legend>
+            <ul>
+              <li>
+                <label class="required" for="myBusinessNameInput">Business name</label>
+                <input id="myBusinessNameInput" name="myBusinessName" type="text" autocomplete="organization" required>
+              </li>
+              <li>
+                <label class="required" for="myBusinessEmailInput">Email</label>
+                <input id="myBusinessEmailInput" name="myBusinessEmail" type="email" autocomplete="email" required>
+              </li>
+              <li>
+                <label for="myBusinessPhoneInput">Phone number</label>
+                <input id="myBusinessPhoneInput" name="myBusinessPhone" type="tel" autocomplete="tel">
+              </li>
+              <li>
+                <label class="required" for="myBusinessAddressInput">Mailing address</label>
+                <textarea id="myBusinessAddressInput" name="myBusinessAddress" autocomplete="street-address" required></textarea>
+              </li>
+              <li>
+                <label for="howToPayInput">How to pay instructions</label>
+                <textarea id="howToPayInput" name="howToPay" rows="3"></textarea>
+              </li>
+            </ul>
+          </fieldset>
+          <fieldset>
+            <legend>Billed business</legend>
+            <ul>
+              <li>
+                <label class="required" for="clientBusinessNameInput">Business name</label>
+                <input id="clientBusinessNameInput" name="clientBusinessName" type="text" autocomplete="organization" required>
+              </li>
+              <li>
+                <label class="required" for="clientBusinessAddressInput">Mailing address</label>
+                <textarea id="clientBusinessAddressInput" name="clientBusinessAddress" autocomplete="street-address" required></textarea>
+              </li>
+              <li>
+                <label for="clientBusinessPhoneInput">Phone number</label>
+                <input id="clientBusinessPhoneInput" name="clientBusinessPhone" type="tel" autocomplete="tel">
+              </li>
+            </ul>
+          </fieldset>
+          <fieldset>
+            <legend>Client contact</legend>
+            <ul>
+              <li>
+                <label for="clientContactNameInput">Name</label>
+                <input id="clientContactNameInput" name="clientContactName" type="text" autocomplete="name">
+              </li>
+              <li>
+                <label for="clientContactEmailInput">Email</label>
+                <input id="clientContactEmailInput" name="clientContactEmail" type="email" autocomplete="email">
+              </li>
+            </ul>
+          </fieldset>
+          <fieldset>
+            <legend>Style</legend>
+            <ul>
+              <li>
+                <label for="accentColorInput">Accent colour</label>
+                <input id="accentColorInput" name="accentColor" type="color" value="#556B2F">
+              </li>
+            </ul>
+          </fieldset>
           <button type="submit" class="action cursor--hover-pointer">Generate invoice</button>
         </form>
       </fieldset>
@@ -335,6 +455,8 @@
     let _accessToken = null;
     let _calendarOptions;
     const LOCAL_STORAGE_APP_PREFIX = 'gctt_';
+    const CALENDAR_STORAGE_KEY = `${LOCAL_STORAGE_APP_PREFIX}calendarInfo`;
+    const INVOICE_DETAILS_STORAGE_KEY = `${LOCAL_STORAGE_APP_PREFIX}invoiceDetails`;
     
     let _activeErrorMessageElements = [];
     const _progressAmountElement = document.getElementById('progressAmount');
@@ -342,14 +464,19 @@
     const _progressContainerElement = document.getElementById('progressContainer');
     const _progressSpinnerElement = document.getElementById('progressSpinner');
     const _form = document.getElementById('appForm')
+    const _startDateInput = document.getElementById('startDate');
+    const _endDateInput = document.getElementById('endDate');
+    [_startDateInput, _endDateInput].forEach((element) => {
+      if(element) {
+        element.addEventListener('change', handleCalendarDateInputChange);
+      }
+    });
 
-    const RATE_PER_HOUR = 28;
-    const MAX_ROWS_PER_TOTALS_PAGE = 17;
+    const DEFAULT_ACCENT_COLOR = '#556B2F';
+    const MAX_ROWS_PER_TOTALS_PAGE = 16;
     const MAX_ROWS_PER_STANDARD_PAGE = 25;
     const INVOICE_DESCRIPTION_MAX_WIDTH = 201;
     const INVOICE_DUE_DATE_OFFSET_DAYS = 14;
-    const TAX_DISPLAY_VALUE = '$0';
-    const RATE_DISPLAY_VALUE = `$${RATE_PER_HOUR}`;
     const ROW_BASELINE_START_Y = 347.636;
     const ROW_VERTICAL_SPACING = 17;
     const ROW_MULTILINE_LINE_HEIGHT = 12;
@@ -410,14 +537,81 @@
       return !!window.localStorage.getItem(key);
     }
 
+    function getStoredCalendarInfo() {
+      const stored = window.localStorage.getItem(CALENDAR_STORAGE_KEY);
+      if(stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if(parsed && typeof parsed === 'object') {
+            return {
+              calendarId: typeof parsed.calendarId === 'string' ? parsed.calendarId : '',
+              startDate: typeof parsed.startDate === 'string' ? parsed.startDate : '',
+              endDate: typeof parsed.endDate === 'string' ? parsed.endDate : '',
+            };
+          }
+        } catch (error) {
+          console.warn('#getStoredCalendarInfo() unable to parse stored calendar info. Clearing.', error);
+          window.localStorage.removeItem(CALENDAR_STORAGE_KEY);
+        }
+      }
+      const legacyCalendarId = window.localStorage.getItem(`${LOCAL_STORAGE_APP_PREFIX}appCalendarData`);
+      if(typeof legacyCalendarId === 'string' && legacyCalendarId.length > 0) {
+        return {
+          calendarId: legacyCalendarId,
+          startDate: '',
+          endDate: '',
+        };
+      }
+      return null;
+    }
+
+    function writeCalendarInfoToStorage(info) {
+      if(!info || typeof info.calendarId !== 'string' || info.calendarId.length === 0) {
+        return;
+      }
+      const payload = {
+        calendarId: info.calendarId,
+        startDate: typeof info.startDate === 'string' ? info.startDate : '',
+        endDate: typeof info.endDate === 'string' ? info.endDate : '',
+      };
+      window.localStorage.setItem(CALENDAR_STORAGE_KEY, JSON.stringify(payload));
+      window.localStorage.removeItem(`${LOCAL_STORAGE_APP_PREFIX}appCalendarData`);
+    }
+
+    function clearStoredCalendarInfo() {
+      window.localStorage.removeItem(CALENDAR_STORAGE_KEY);
+      window.localStorage.removeItem(`${LOCAL_STORAGE_APP_PREFIX}appCalendarData`);
+    }
+
     function computeIsCalendarInLocalStorage() {
-      return computeIsKeyInLocalStorage(`${LOCAL_STORAGE_APP_PREFIX}appCalendarData`);
+      return !!getStoredCalendarInfo();
     }
 
     function setupRememberCalendar() {
-      if(computeIsCalendarInLocalStorage()) {
-        // We remove the key onChange when the attribute's `checked` value changes to `false`
-        setIsCheckedForElementWithId('rememberCalendarCheckbox', computeIsKeyInLocalStorage(`${LOCAL_STORAGE_APP_PREFIX}appCalendarData`));
+      const storedInfo = getStoredCalendarInfo();
+      const isRemembering = !!(storedInfo && typeof storedInfo.calendarId === 'string' && storedInfo.calendarId.length > 0);
+      setIsCheckedForElementWithId('rememberCalendarCheckbox', isRemembering);
+      if(!storedInfo) {
+        return;
+      }
+      if(_calendarOptions && storedInfo.calendarId && _calendarOptions.computeHasCalendar(storedInfo.calendarId)) {
+        _calendarOptions.setValue(storedInfo.calendarId);
+      }
+      const startDateElement = document.getElementById('startDate');
+      const endDateElement = document.getElementById('endDate');
+      const todayString = new Date(Date.now()).toISOString().split('T')[0];
+      if(startDateElement && typeof storedInfo.startDate === 'string' && storedInfo.startDate.length > 0) {
+        startDateElement.value = storedInfo.startDate > todayString ? todayString : storedInfo.startDate;
+      }
+      if(endDateElement && typeof storedInfo.endDate === 'string' && storedInfo.endDate.length > 0) {
+        endDateElement.value = storedInfo.endDate > todayString ? todayString : storedInfo.endDate;
+      }
+      if(isRemembering) {
+        writeCalendarInfoToStorage({
+          calendarId: storedInfo.calendarId,
+          startDate: startDateElement?.value ?? '',
+          endDate: endDateElement?.value ?? '',
+        });
       }
     }
     // TODO: Finish
@@ -441,11 +635,32 @@
       return element.checked = checked;
     }
 
-    function handleCalendarChange(event) {
+    function handleCalendarChange() {
       if(getCheckedForElementWithId('rememberCalendarCheckbox')) {
-        window.localStorage.setItem(
-          `${LOCAL_STORAGE_APP_PREFIX}appCalendarData`, _calendarOptions.getSelectElementValue())
+        updateCalendarInfoStorage();
       }
+    }
+
+    function updateCalendarInfoStorage() {
+      if(!_calendarOptions) {
+        return;
+      }
+      if(!getCheckedForElementWithId('rememberCalendarCheckbox')) {
+        return;
+      }
+      const info = {
+        calendarId: _calendarOptions.getSelectElementValue(),
+        startDate: _form?.startDate?.value ?? '',
+        endDate: _form?.endDate?.value ?? '',
+      };
+      writeCalendarInfoToStorage(info);
+    }
+
+    function handleCalendarDateInputChange() {
+      if(!getCheckedForElementWithId('rememberCalendarCheckbox')) {
+        return;
+      }
+      updateCalendarInfoStorage();
     }
 
     function getCheckedForElementWithId(id) {
@@ -461,27 +676,13 @@
       return element.checked;
     }
 
-    function computeIsKeyInLocalStorage(key) {
-      if(!key || key.length === 0) {
-        throw new Error(`#isKeyInLocalStorage(key=${key})
-        Missing required param error. Param 'key' is required
-        `);
-      }
-      return !!window.localStorage.getItem(key);
-    }
-
-    function computeIsCalendarInLocalStorage() {
-      return computeIsKeyInLocalStorage(`${LOCAL_STORAGE_APP_PREFIX}appCalendarData`);
-    }
-
     function handleRememberCalendarChange(event) {
-      // TODO: check localStorage to see if we are remembering
-      const localStorageKey = `${LOCAL_STORAGE_APP_PREFIX}appCalendarData`;
-      if(computeIsCalendarInLocalStorage()) {
-        window.localStorage.removeItem(localStorageKey);
-        return;
+      const isChecked = event?.target?.checked ?? getCheckedForElementWithId('rememberCalendarCheckbox');
+      if(isChecked) {
+        updateCalendarInfoStorage();
+      } else {
+        clearStoredCalendarInfo();
       }
-      window.localStorage.setItem(localStorageKey, _calendarOptions.getSelectElementValue());
     }
 
     function handleInvoiceFormSubmit(event) {
@@ -561,24 +762,23 @@
         return;
       }
       _calendarOptions = new CalendarOptions(data.calendars);
+      setupDatePickers();
       setupRememberCalendar();
       // setupRememberDates()
-      if(computeIsCalendarInLocalStorage()) {
-        const localStorageCalendarId = window.localStorage.getItem(`${LOCAL_STORAGE_APP_PREFIX}appCalendarData`);
-        if(_calendarOptions.computeHasCalendar(localStorageCalendarId)) {
-          _calendarOptions.setValue(localStorageCalendarId);
-        }
-      }
-      setupDatePickers()
     }
 
     function setupDatePickers() {
       const startDateElement = document.getElementById('startDate');
-      const endDataElement = document.getElementById('endDate');
-      [startDate, endData].forEach((element) => {
-        const timeString = new Date(Date.now()).toISOString().split('T')[0];
-        element.value = timeString;
-        element.max = timeString;
+      const endDateElement = document.getElementById('endDate');
+      const todayString = new Date(Date.now()).toISOString().split('T')[0];
+      [startDateElement, endDateElement].forEach((element) => {
+        if(!element) {
+          return;
+        }
+        element.max = todayString;
+        if(!element.value) {
+          element.value = todayString;
+        }
       });
     }
 
@@ -812,6 +1012,92 @@
       return rounded.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
     }
 
+    function normalizeSingleLineText(value) {
+      if(value == null) {
+        return '';
+      }
+      const stringValue = value.toString().replace(/\r\n/g, '\n');
+      return stringValue
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0)
+        .join(' ')
+        .trim();
+    }
+
+    function normalizeMultilineText(value) {
+      if(value == null) {
+        return '';
+      }
+      const normalized = value.toString().replace(/\r\n/g, '\n');
+      const lines = normalized.split('\n').map((line) => line.replace(/\s+$/g, ''));
+      while(lines.length > 0 && lines[0].trim().length === 0) {
+        lines.shift();
+      }
+      while(lines.length > 0 && lines[lines.length - 1].trim().length === 0) {
+        lines.pop();
+      }
+      return lines.join('\n').trim();
+    }
+
+    function isValidEmail(value) {
+      if(!value) {
+        return false;
+      }
+      const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return EMAIL_REGEX.test(value);
+    }
+
+    function isValidHexColor(value) {
+      if(typeof value !== 'string') {
+        return false;
+      }
+      return /^#([0-9a-fA-F]{6})$/.test(value.trim());
+    }
+
+    function parseHexColor(value) {
+      if(!isValidHexColor(value)) {
+        return null;
+      }
+      const hex = value.replace('#', '');
+      return {
+        r: parseInt(hex.slice(0, 2), 16),
+        g: parseInt(hex.slice(2, 4), 16),
+        b: parseInt(hex.slice(4, 6), 16),
+      };
+    }
+
+    function formatRgbToHex(r, g, b) {
+      const clamp = (component) => Math.max(0, Math.min(255, Math.round(component)));
+      const toHex = (component) => clamp(component).toString(16).padStart(2, '0');
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    }
+
+    function buildMultilineValue(lines) {
+      if(!Array.isArray(lines)) {
+        return '';
+      }
+      return lines
+        .flatMap((entry) => {
+          if(entry == null) {
+            return [];
+          }
+          const normalized = entry.toString().replace(/\r\n/g, '\n');
+          return normalized.split('\n');
+        })
+        .map((part) => part.trim())
+        .filter((part) => part.length > 0)
+        .join('\n');
+    }
+
+    function formatPercentage(value) {
+      if(!Number.isFinite(value) || value === 0) {
+        return '';
+      }
+      const fixed = Math.abs(value % 1) < 0.01 ? value.toFixed(0) : value.toFixed(2);
+      return `${fixed.replace(/\.00$/, '').replace(/(\.\d)0$/, '$1')}%`;
+    }
+
     class InvoiceBuilderController {
       constructor() {
         this.fieldset = document.getElementById('invoiceBuilderFieldset');
@@ -826,7 +1112,151 @@
         this.measureContext = this.measureCanvas?.getContext('2d') ?? null;
         this.canvasFont = '600 10px "Inter", sans-serif';
         this.lastInvoiceMetadata = null;
+        this.form = document.getElementById('invoiceBuilderForm');
+        this.rememberInvoiceCheckbox = document.getElementById('rememberInvoiceInputsCheckbox');
+        this.invoiceDetailsStorageKey = INVOICE_DETAILS_STORAGE_KEY;
+        this.isApplyingStoredInvoice = false;
+        this.initInvoiceDetailsPersistence();
         this.disable('The Invoice Builder will be enabled after using the time tracker.');
+      }
+
+      initInvoiceDetailsPersistence() {
+        if(this.rememberInvoiceCheckbox) {
+          this.rememberInvoiceCheckbox.addEventListener('change', () => this.handleInvoiceRememberChange());
+        }
+        if(this.form) {
+          const persistHandler = () => this.handleInvoiceFormInput();
+          this.form.addEventListener('input', persistHandler);
+          this.form.addEventListener('change', persistHandler);
+        }
+        this.applyStoredInvoiceDetails();
+      }
+
+      handleInvoiceRememberChange() {
+        if(!this.rememberInvoiceCheckbox) {
+          return;
+        }
+        if(this.rememberInvoiceCheckbox.checked) {
+          this.persistInvoiceDetailsIfNeeded();
+        } else {
+          window.localStorage.removeItem(this.invoiceDetailsStorageKey);
+        }
+      }
+
+      handleInvoiceFormInput() {
+        this.persistInvoiceDetailsIfNeeded();
+      }
+
+      persistInvoiceDetailsIfNeeded() {
+        if(this.isApplyingStoredInvoice) {
+          return;
+        }
+        if(!this.rememberInvoiceCheckbox || !this.rememberInvoiceCheckbox.checked) {
+          return;
+        }
+        const values = this.collectInvoiceFormValues();
+        if(!values) {
+          return;
+        }
+        const payload = {
+          checked: true,
+          values,
+        };
+        try {
+          window.localStorage.setItem(this.invoiceDetailsStorageKey, JSON.stringify(payload));
+        } catch (error) {
+          console.warn('#InvoiceBuilderController.persistInvoiceDetailsIfNeeded() failed', error);
+        }
+      }
+
+      collectInvoiceFormValues() {
+        if(!this.form) {
+          return null;
+        }
+        const formData = new FormData(this.form);
+        const toSingle = (name) => normalizeSingleLineText(formData.get(name));
+        const toMulti = (name) => normalizeMultilineText(formData.get(name));
+        const numericToString = (name) => (formData.get(name) ?? '').toString().trim();
+        const accentValueRaw = (formData.get('accentColor') ?? DEFAULT_ACCENT_COLOR).toString().trim();
+        return {
+          invoiceNumber: toSingle('invoiceNumber'),
+          clientInvoiceNumber: toSingle('clientInvoiceNumber'),
+          rate: numericToString('rate'),
+          taxRate: numericToString('taxRate'),
+          myBusinessName: toSingle('myBusinessName'),
+          myBusinessEmail: toSingle('myBusinessEmail'),
+          myBusinessPhone: toSingle('myBusinessPhone'),
+          myBusinessAddress: toMulti('myBusinessAddress'),
+          howToPay: toMulti('howToPay'),
+          clientBusinessName: toSingle('clientBusinessName'),
+          clientBusinessAddress: toMulti('clientBusinessAddress'),
+          clientBusinessPhone: toSingle('clientBusinessPhone'),
+          clientContactName: toSingle('clientContactName'),
+          clientContactEmail: toSingle('clientContactEmail'),
+          accentColor: isValidHexColor(accentValueRaw) ? accentValueRaw : DEFAULT_ACCENT_COLOR,
+        };
+      }
+
+      applyStoredInvoiceDetails() {
+        if(!this.form) {
+          return;
+        }
+        const raw = window.localStorage.getItem(this.invoiceDetailsStorageKey);
+        if(!raw) {
+          if(this.rememberInvoiceCheckbox) {
+            this.rememberInvoiceCheckbox.checked = false;
+          }
+          return;
+        }
+        let payload;
+        try {
+          payload = JSON.parse(raw);
+        } catch (error) {
+          console.warn('#InvoiceBuilderController.applyStoredInvoiceDetails() unable to parse stored data. Clearing.', error);
+          window.localStorage.removeItem(this.invoiceDetailsStorageKey);
+          if(this.rememberInvoiceCheckbox) {
+            this.rememberInvoiceCheckbox.checked = false;
+          }
+          return;
+        }
+        const values = payload?.values && typeof payload.values === 'object' ? payload.values : payload;
+        const isChecked = payload?.checked !== false;
+        if(this.rememberInvoiceCheckbox) {
+          this.rememberInvoiceCheckbox.checked = isChecked;
+        }
+        if(!values || typeof values !== 'object') {
+          return;
+        }
+        const assignValue = (name, nextValue) => {
+          const element = this.form?.elements?.namedItem(name);
+          if(element && typeof element.value !== 'undefined') {
+            element.value = nextValue ?? '';
+          }
+        };
+        this.isApplyingStoredInvoice = true;
+        assignValue('invoiceNumber', values.invoiceNumber ?? '');
+        assignValue('clientInvoiceNumber', values.clientInvoiceNumber ?? '');
+        assignValue('rate', values.rate ?? '');
+        assignValue('taxRate', values.taxRate ?? '');
+        assignValue('myBusinessName', values.myBusinessName ?? '');
+        assignValue('myBusinessEmail', values.myBusinessEmail ?? '');
+        assignValue('myBusinessPhone', values.myBusinessPhone ?? '');
+        assignValue('myBusinessAddress', values.myBusinessAddress ?? '');
+        assignValue('howToPay', values.howToPay ?? '');
+        assignValue('clientBusinessName', values.clientBusinessName ?? '');
+        assignValue('clientBusinessAddress', values.clientBusinessAddress ?? '');
+        assignValue('clientBusinessPhone', values.clientBusinessPhone ?? '');
+        assignValue('clientContactName', values.clientContactName ?? '');
+        assignValue('clientContactEmail', values.clientContactEmail ?? '');
+        const accentColorElement = this.form?.elements?.namedItem('accentColor');
+        if(accentColorElement && typeof accentColorElement.value !== 'undefined') {
+          const accentValue = isValidHexColor(values.accentColor)
+            ? values.accentColor
+            : DEFAULT_ACCENT_COLOR;
+          accentColorElement.value = accentValue;
+        }
+        this.isApplyingStoredInvoice = false;
+        this.persistInvoiceDetailsIfNeeded();
       }
 
       disable(message) {
@@ -874,18 +1304,41 @@
           return;
         }
         const form = event.target;
+        if(form instanceof HTMLFormElement && !form.reportValidity()) {
+          return;
+        }
         const formData = new FormData(form);
-        const invoiceNumberRaw = (formData.get('invoiceNumber') || '').toString().trim();
-        const invoiceNumber = invoiceNumberRaw.length > 0 ? invoiceNumberRaw : '#1';
-        const clientInvoiceNumber = (formData.get('clientInvoiceNumber') || '').toString().trim();
+        const parsed = this.parseInvoiceForm(formData);
+        if(parsed.errors.length > 0) {
+          this.presentInvoiceErrors(parsed.errors);
+          return;
+        }
+        const {
+          invoiceNumber,
+          clientInvoiceNumber,
+          hourlyRate,
+          taxRatePercent,
+          myBusiness,
+          clientBusiness,
+          clientContact,
+          howToPay,
+          accentColor,
+        } = parsed.data;
         try {
           const templates = await this.loadTemplates();
           const invoiceDate = new Date();
           const dueDate = addDays(invoiceDate, INVOICE_DUE_DATE_OFFSET_DAYS);
-          const rows = this.prepareRows();
-          const totalCents = rows.reduce((sum, row) => sum + row.amountCents, 0);
-          const totalAmount = totalCents / 100;
-          const totalText = formatCurrency(totalAmount);
+          const rows = this.prepareRows(hourlyRate);
+          const subtotalCents = rows.reduce((sum, row) => sum + row.amountCents, 0);
+          const taxCents = Math.round(subtotalCents * (taxRatePercent / 100));
+          const totalCents = subtotalCents + taxCents;
+          const subtotalText = formatCurrency(subtotalCents / 100);
+          const totalText = formatCurrency(totalCents / 100);
+          const taxAmount = taxCents / 100;
+          const taxPercentageText = formatPercentage(taxRatePercent);
+          const taxText = taxPercentageText
+            ? `${formatCurrency(taxAmount)} (${taxPercentageText})`
+            : formatCurrency(taxAmount);
           const summaryTotalHours = Number(this.resultsData?.summaryData?.totalHours);
           let totalHoursValue = Number.isFinite(summaryTotalHours) ? summaryTotalHours : NaN;
           if(!Number.isFinite(totalHoursValue)) {
@@ -905,20 +1358,128 @@
             clientInvoiceNumber,
             invoiceDate,
             dueDate,
-            totalAmountString: totalText,
-            totalCents,
+            subtotalText,
+            taxText,
+            totalText,
             totalHoursString,
+            myBusiness,
+            clientBusiness,
+            clientContact,
+            howToPay,
+            accentColor,
           });
           this.lastInvoiceMetadata = {
             invoiceNumber,
             clientInvoiceNumber,
             invoiceDate,
+            myBusinessName: myBusiness.name,
+            accentColor,
           };
           this.renderPages(pages);
+          this.persistInvoiceDetailsIfNeeded();
         } catch (error) {
           console.error('#InvoiceBuilderController.handleFormSubmit()', error);
           presentError('Unable to generate the invoice. Please try again.');
         }
+      }
+
+      parseInvoiceForm(formData) {
+        const errors = [];
+        const invoiceNumber = normalizeSingleLineText(formData.get('invoiceNumber'));
+        if(!invoiceNumber) {
+          errors.push('Invoice number is required.');
+        }
+        const clientInvoiceNumber = normalizeSingleLineText(formData.get('clientInvoiceNumber'));
+        const rateRaw = (formData.get('rate') ?? '').toString().trim();
+        let hourlyRate = Number.NaN;
+        if(rateRaw.length === 0) {
+          errors.push('Hourly rate is required.');
+        } else {
+          hourlyRate = Number.parseFloat(rateRaw);
+          if(!Number.isFinite(hourlyRate) || hourlyRate < 0) {
+            errors.push('Hourly rate must be zero or a positive number.');
+          }
+        }
+        const taxRateRaw = (formData.get('taxRate') ?? '').toString().trim();
+        let taxRatePercent = 0;
+        if(taxRateRaw.length > 0) {
+          const parsedTaxRate = Number.parseFloat(taxRateRaw);
+          if(Number.isFinite(parsedTaxRate) && parsedTaxRate >= 0) {
+            taxRatePercent = parsedTaxRate;
+          } else {
+            errors.push('Tax rate must be zero or a positive number.');
+          }
+        }
+        const myBusinessName = normalizeSingleLineText(formData.get('myBusinessName'));
+        if(!myBusinessName) {
+          errors.push('My business name is required.');
+        }
+        const myBusinessEmail = normalizeSingleLineText(formData.get('myBusinessEmail'));
+        if(!myBusinessEmail) {
+          errors.push('My business email is required.');
+        } else if(!isValidEmail(myBusinessEmail)) {
+          errors.push('My business email must be a valid email address.');
+        }
+        const myBusinessPhone = normalizeSingleLineText(formData.get('myBusinessPhone'));
+        const myBusinessAddress = normalizeMultilineText(formData.get('myBusinessAddress'));
+        if(!myBusinessAddress) {
+          errors.push('My business mailing address is required.');
+        }
+        const howToPay = normalizeMultilineText(formData.get('howToPay'));
+        const clientBusinessName = normalizeSingleLineText(formData.get('clientBusinessName'));
+        if(!clientBusinessName) {
+          errors.push('Client business name is required.');
+        }
+        const clientBusinessAddress = normalizeMultilineText(formData.get('clientBusinessAddress'));
+        if(!clientBusinessAddress) {
+          errors.push('Client business mailing address is required.');
+        }
+        const clientBusinessPhone = normalizeSingleLineText(formData.get('clientBusinessPhone'));
+        const clientContactName = normalizeSingleLineText(formData.get('clientContactName'));
+        const clientContactEmail = normalizeSingleLineText(formData.get('clientContactEmail'));
+        if(clientContactEmail && !isValidEmail(clientContactEmail)) {
+          errors.push('Client contact email must be a valid email address.');
+        }
+        const accentColorRaw = (formData.get('accentColor') ?? '').toString().trim();
+        const accentColor = isValidHexColor(accentColorRaw) ? accentColorRaw : DEFAULT_ACCENT_COLOR;
+        if(accentColorRaw && !isValidHexColor(accentColorRaw)) {
+          errors.push('Accent colour must be a valid hex colour.');
+        }
+        return {
+          data: {
+            invoiceNumber,
+            clientInvoiceNumber,
+            hourlyRate,
+            taxRatePercent,
+            myBusiness: {
+              name: myBusinessName,
+              email: myBusinessEmail,
+              phone: myBusinessPhone,
+              address: myBusinessAddress,
+            },
+            clientBusiness: {
+              name: clientBusinessName,
+              address: clientBusinessAddress,
+              phone: clientBusinessPhone,
+            },
+            clientContact: {
+              name: clientContactName,
+              email: clientContactEmail,
+            },
+            howToPay,
+            accentColor,
+          },
+          errors,
+        };
+      }
+
+      presentInvoiceErrors(errors) {
+        if(!Array.isArray(errors) || errors.length === 0) {
+          return;
+        }
+        const uniqueErrors = [...new Set(errors)];
+        const message = `Please correct the following invoice fields:\n• ${uniqueErrors.join('\n• ')}`;
+        presentError(message);
       }
 
       async loadTemplates() {
@@ -942,22 +1503,24 @@
         return this.templatePromise;
       }
 
-      prepareRows() {
+      prepareRows(hourlyRate) {
         if(!this.resultsData) {
           return [];
         }
         return this.resultsData.eventsData
           .slice()
           .sort((a, b) => (new Date(a.start)) - (new Date(b.start)))
-          .map((eventData) => this.transformEvent(eventData));
+          .map((eventData) => this.transformEvent(eventData, hourlyRate));
       }
 
-      transformEvent(eventData) {
+      transformEvent(eventData, hourlyRate) {
         const title = (eventData.title || '').trim();
         const startDate = new Date(eventData.start);
         const hours = roundToTwo(eventData.hours);
-        const amountCents = Math.round(hours * RATE_PER_HOUR * 100);
+        const safeRate = Number.isFinite(hourlyRate) ? hourlyRate : 0;
+        const amountCents = Math.round(hours * safeRate * 100);
         const amount = amountCents / 100;
+        const rateText = formatCurrency(safeRate).replace(/\.00$/, '');
         return {
           rawTitle: title,
           truncatedTitle: this.truncateDescription(title),
@@ -966,6 +1529,7 @@
           hoursText: formatHours(hours),
           amountText: formatCurrency(amount),
           amountCents,
+          rateText,
         };
       }
 
@@ -989,7 +1553,23 @@
         return truncated.length ? truncated + suffix : suffix;
       }
 
-      buildPages({ rows, templates, invoiceNumber, clientInvoiceNumber, invoiceDate, dueDate, totalAmountString, totalCents, totalHoursString }) {
+      buildPages({
+        rows,
+        templates,
+        invoiceNumber,
+        clientInvoiceNumber,
+        invoiceDate,
+        dueDate,
+        subtotalText,
+        taxText,
+        totalText,
+        totalHoursString,
+        myBusiness,
+        clientBusiness,
+        clientContact,
+        howToPay,
+        accentColor,
+      }) {
         const pagesConfig = this.partitionRows(rows);
         const totalPages = pagesConfig.length;
         return pagesConfig.map((pageConfig, index) => {
@@ -1004,10 +1584,16 @@
             clientInvoiceNumber,
             invoiceDate,
             dueDate,
-            totalAmountString,
+            subtotalText,
+            taxText,
+            totalText,
             includeTotals: isLastPage,
-            totalCents,
             totalHoursString,
+            myBusiness,
+            clientBusiness,
+            clientContact,
+            howToPay,
+            accentColor,
           });
           return svgElement;
         });
@@ -1017,59 +1603,56 @@
         if(!Array.isArray(rows) || rows.length === 0) {
           return [];
         }
-        const totalRows = rows.length;
-        if(totalRows <= MAX_ROWS_PER_TOTALS_PAGE) {
-          return [
-            {
-              rows: rows.slice(),
-            },
-          ];
-        }
-
-        const maxLastPageRows = Math.min(MAX_ROWS_PER_TOTALS_PAGE, totalRows);
-        let bestLastPageRows = 1;
-        // Choose a totals-page size that keeps standard pages as full as possible while respecting limits.
-        let bestScore = this.computeStandardPageRemainderScore(totalRows - bestLastPageRows);
-
-        for(let candidate = 2; candidate <= maxLastPageRows; candidate += 1) {
-          const remaining = totalRows - candidate;
-          const score = this.computeStandardPageRemainderScore(remaining);
-          if(score > bestScore) {
-            bestLastPageRows = candidate;
-            bestScore = score;
-          }
-        }
-
         const pages = [];
         let cursor = 0;
-        let standardRowsRemaining = totalRows - bestLastPageRows;
-        while(standardRowsRemaining > 0) {
-          const chunkSize = Math.min(MAX_ROWS_PER_STANDARD_PAGE, standardRowsRemaining);
+        while(cursor < rows.length) {
+          const remaining = rows.length - cursor;
+          if(remaining > MAX_ROWS_PER_STANDARD_PAGE) {
+            pages.push({
+              rows: rows.slice(cursor, cursor + MAX_ROWS_PER_STANDARD_PAGE),
+            });
+            cursor += MAX_ROWS_PER_STANDARD_PAGE;
+            continue;
+          }
+          if(remaining > MAX_ROWS_PER_TOTALS_PAGE) {
+            // Keep all remaining rows on a standard page, then add an empty totals page.
+            pages.push({
+              rows: rows.slice(cursor),
+            });
+            pages.push({
+              rows: [],
+            });
+            cursor = rows.length;
+            break;
+          }
           pages.push({
-            rows: rows.slice(cursor, cursor + chunkSize),
+            rows: rows.slice(cursor),
           });
-          cursor += chunkSize;
-          standardRowsRemaining -= chunkSize;
-        }
-
-        const lastPageRows = rows.slice(cursor);
-        if(lastPageRows.length > 0) {
-          pages.push({
-            rows: lastPageRows,
-          });
+          cursor = rows.length;
         }
         return pages;
       }
 
-      computeStandardPageRemainderScore(remainingRows) {
-        if(remainingRows <= 0) {
-          return MAX_ROWS_PER_STANDARD_PAGE;
-        }
-        const remainder = remainingRows % MAX_ROWS_PER_STANDARD_PAGE;
-        return remainder === 0 ? MAX_ROWS_PER_STANDARD_PAGE : remainder;
-      }
-
-      populatePage({ templateString, rows, pageNumber, totalPages, invoiceNumber, clientInvoiceNumber, invoiceDate, dueDate, totalAmountString, includeTotals, totalCents, totalHoursString }) {
+      populatePage({
+        templateString,
+        rows,
+        pageNumber,
+        totalPages,
+        invoiceNumber,
+        clientInvoiceNumber,
+        invoiceDate,
+        dueDate,
+        subtotalText,
+        taxText,
+        totalText,
+        includeTotals,
+        totalHoursString,
+        myBusiness,
+        clientBusiness,
+        clientContact,
+        howToPay,
+        accentColor,
+      }) {
         if(!templateString) {
           throw new Error('#InvoiceBuilderController.populatePage() Missing template string');
         }
@@ -1088,16 +1671,40 @@
         const dueDateText = formatInvoiceHeaderDate(dueDate);
         this.setTextContent(doc, 'invoiceDataValue', invoiceDateText);
         this.setTextContent(doc, 'dueDataValue', dueDateText);
-        this.setTextContent(doc, 'invoiceOfValue', totalAmountString);
+        this.setTextContent(doc, 'invoiceOfValue', totalText);
         if(includeTotals) {
-          const subtotalText = formatCurrency(totalCents / 100);
           this.setTextContent(doc, 'subtotalValue', subtotalText);
-          this.setTextContent(doc, 'totalValue', subtotalText);
-          this.setTextContent(doc, 'taxValue', TAX_DISPLAY_VALUE);
+          this.setTextContent(doc, 'totalValue', totalText);
+          this.setTextContent(doc, 'taxValue', taxText);
           if(typeof totalHoursString === 'string') {
             this.setTextContent(doc, 'totalHoursValue', totalHoursString);
           }
         }
+        if(myBusiness) {
+          this.setTextContent(doc, 'myNameValue', myBusiness.name ?? '');
+          this.setTextContent(doc, 'myEmailValue', myBusiness.email ?? '');
+          this.setTextContent(doc, 'myPhoneNumberValue', myBusiness.phone ?? '');
+          this.setTextContent(doc, 'myAddressValue', myBusiness.address ?? '');
+        }
+        if(typeof howToPay === 'string') {
+          this.setTextContent(doc, 'howToPayValue', howToPay);
+        }
+        if(clientBusiness) {
+          const billedToText = buildMultilineValue([
+            clientBusiness.name,
+            clientBusiness.address,
+            clientBusiness.phone,
+          ]);
+          this.setTextContent(doc, 'billedToValue', billedToText);
+        }
+        if(clientContact) {
+          const contactText = buildMultilineValue([
+            clientContact.name,
+            clientContact.email,
+          ]);
+          this.setTextContent(doc, 'contactPersonValue', contactText);
+        }
+        this.applyAccentColor(doc, accentColor);
         this.populateRows(doc, rows);
         this.prefixIds(svgElement, `invoicePage${pageNumber}`);
         return document.importNode(svgElement, true);
@@ -1123,11 +1730,31 @@
           this.setRowText(template, 'descriptionValue', row.truncatedTitle, baselineY);
           this.setRowText(template, 'hoursValue', row.hoursText, baselineY);
           this.setRowText(template, 'startTimeValue', row.startTimeText, baselineY);
-          this.setRowText(template, 'rateValue', RATE_DISPLAY_VALUE, baselineY);
+          this.setRowText(template, 'rateValue', row.rateText, baselineY);
           this.setRowText(template, 'amountValue', row.amountText, baselineY);
           this.adjustRowBackground(template, baselineY);
           rowsContainer.appendChild(template);
         });
+      }
+
+      applyAccentColor(doc, accentColor) {
+        const color = isValidHexColor(accentColor) ? accentColor : DEFAULT_ACCENT_COLOR;
+        const accentTargets = ['invoiceOfValue', 'myNameValue', 'totalValue', 'Total'];
+        accentTargets.forEach((id) => {
+          const element = doc.getElementById(id);
+          this.setFillColor(element, color);
+        });
+      }
+
+      setFillColor(element, color) {
+        if(!element || !color) {
+          return;
+        }
+        element.setAttribute('fill', color);
+        const tspans = element.querySelectorAll('tspan');
+        if(tspans.length > 0) {
+          tspans.forEach((span) => span.setAttribute('fill', color));
+        }
       }
 
       setRowText(rowGroup, idPrefix, value, baselineY) {
@@ -1152,23 +1779,85 @@
         if(!element) {
           return;
         }
-        const tspans = element.tagName.toLowerCase() === 'tspan'
+        const stringValue = (value ?? '').toString();
+        const lines = stringValue.split('\n');
+        const isMultiLine = lines.length > 1;
+        const namespace = element.ownerDocument?.documentElement?.namespaceURI || 'http://www.w3.org/2000/svg';
+        let tspans = element.tagName.toLowerCase() === 'tspan'
           ? [element]
           : Array.from(element.querySelectorAll('tspan'));
-        if(tspans.length > 0) {
-          const stringValue = (value ?? '').toString();
-          if(tspans.length === 1) {
-            tspans[0].textContent = stringValue;
-          } else {
-            const segments = stringValue.split('\n');
-            tspans.forEach((span, index) => {
-              span.textContent = segments[index] ?? '';
-            });
+        const getSpanYValue = (span) => {
+          if(!span) {
+            return Number.NaN;
           }
-        } else {
-          element.textContent = value ?? '';
+          const yAttr = span.getAttribute('y');
+          return typeof yAttr === 'string' && yAttr.length > 0 ? parseFloat(yAttr) : Number.NaN;
+        };
+        const computeLineSpacing = (spans) => {
+          if(!Array.isArray(spans) || spans.length < 2) {
+            return ROW_MULTILINE_LINE_HEIGHT;
+          }
+          const baseY = getSpanYValue(spans[0]);
+          for(let index = 1; index < spans.length; index += 1) {
+            const currentY = getSpanYValue(spans[index]);
+            if(!Number.isNaN(baseY) && !Number.isNaN(currentY)) {
+              const delta = currentY - baseY;
+              if(Number.isFinite(delta) && delta !== 0) {
+                return delta;
+              }
+            }
+          }
+          return ROW_MULTILINE_LINE_HEIGHT;
+        };
+
+        if(tspans.length === 0 && isMultiLine) {
+          const newTspan = element.ownerDocument?.createElementNS(namespace, 'tspan') ?? document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+          if(element.hasAttribute('x')) {
+            newTspan.setAttribute('x', element.getAttribute('x'));
+          }
+          if(element.hasAttribute('y')) {
+            newTspan.setAttribute('y', element.getAttribute('y'));
+          }
+          element.textContent = '';
+          element.appendChild(newTspan);
+          tspans = [newTspan];
         }
-        this.applyRightAlignedFormatting(element, tspans);
+
+        if(tspans.length > 0) {
+          let lineSpacing = computeLineSpacing(tspans);
+          if(!Number.isFinite(lineSpacing) || lineSpacing === 0) {
+            lineSpacing = ROW_MULTILINE_LINE_HEIGHT;
+          }
+          const templateSpan = tspans[0];
+          if(isMultiLine) {
+            while(tspans.length < lines.length) {
+              const clone = templateSpan.cloneNode(true);
+              clone.textContent = '';
+               const previousSpan = tspans[tspans.length - 1];
+               const previousY = getSpanYValue(previousSpan);
+               if(!Number.isNaN(previousY)) {
+                 clone.setAttribute('y', (previousY + lineSpacing).toFixed(3));
+               }
+              element.appendChild(clone);
+              tspans.push(clone);
+            }
+          }
+          while(tspans.length > lines.length) {
+            const removed = tspans.pop();
+            if(removed?.parentNode) {
+              removed.parentNode.removeChild(removed);
+            }
+          }
+          tspans.forEach((span, index) => {
+            span.textContent = lines[index] ?? '';
+          });
+        } else {
+          element.textContent = stringValue;
+        }
+        const updatedTspans = element.tagName.toLowerCase() === 'tspan'
+          ? [element]
+          : Array.from(element.querySelectorAll('tspan'));
+        this.applyRightAlignedFormatting(element, updatedTspans);
       }
 
       setElementPosition(element, baselineY) {
@@ -1283,6 +1972,7 @@
         svgElements.forEach((svgElement, index) => {
           const clone = svgElement.cloneNode(true);
           this.prepareSvgForDownload(clone);
+          this.revertRightAlignedTextForSvgExport(clone);
           const serialized = serializer.serializeToString(clone);
           const svgContent = `<?xml version="1.0" encoding="UTF-8"?>\n${serialized}`;
           const filename = this.buildSvgFilename(index + 1, totalPages);
@@ -1301,6 +1991,74 @@
         if(!svgElement.getAttribute('viewBox')) {
           svgElement.setAttribute('viewBox', '0 0 595 842');
         }
+      }
+
+      revertRightAlignedTextForSvgExport(svgElement) {
+        if(!svgElement || typeof svgElement.querySelectorAll !== 'function') {
+          return;
+        }
+        const parseStoredOriginalX = (node) => {
+          if(!node) {
+            return Number.NaN;
+          }
+          const datasetValue = node.dataset?.invoiceOriginalX;
+          if(typeof datasetValue === 'string' && datasetValue.length > 0) {
+            const parsed = parseFloat(datasetValue);
+            if(Number.isFinite(parsed)) {
+              return parsed;
+            }
+          }
+          const attrValue = node.getAttribute('data-invoice-original-x');
+          if(typeof attrValue === 'string' && attrValue.length > 0) {
+            const parsed = parseFloat(attrValue);
+            if(Number.isFinite(parsed)) {
+              return parsed;
+            }
+          }
+          return Number.NaN;
+        };
+        const textElements = svgElement.querySelectorAll('text[data-invoice-original-x]');
+        textElements.forEach((textElement) => {
+          const originalX = parseStoredOriginalX(textElement);
+          if(Number.isFinite(originalX)) {
+            textElement.setAttribute('x', originalX.toFixed(3));
+          } else if(textElement.hasAttribute('x')) {
+            const currentX = textElement.getAttribute('x');
+            if(typeof currentX === 'string' && currentX.length > 0) {
+              textElement.setAttribute('x', parseFloat(currentX).toFixed(3));
+            }
+          }
+          this.clearTextAnchorStyle(textElement);
+          textElement.removeAttribute('data-invoice-original-x');
+          if(textElement.dataset) {
+            delete textElement.dataset.invoiceOriginalX;
+          }
+        });
+        const tspanElements = svgElement.querySelectorAll('tspan[data-invoice-original-x]');
+        tspanElements.forEach((span) => {
+          const originalX = parseStoredOriginalX(span);
+          if(Number.isFinite(originalX)) {
+            span.setAttribute('x', originalX.toFixed(3));
+          } else if(span.hasAttribute('x')) {
+            const currentX = span.getAttribute('x');
+            if(typeof currentX === 'string' && currentX.length > 0) {
+              span.setAttribute('x', parseFloat(currentX).toFixed(3));
+            }
+          }
+          this.clearTextAnchorStyle(span);
+          const parentText = typeof span.closest === 'function' ? span.closest('text') : null;
+          if(parentText && !parentText.hasAttribute('data-invoice-original-x')) {
+            const parentX = parentText.getAttribute('x');
+            if(!parentX && Number.isFinite(originalX)) {
+              parentText.setAttribute('x', originalX.toFixed(3));
+            }
+            this.clearTextAnchorStyle(parentText);
+          }
+          span.removeAttribute('data-invoice-original-x');
+          if(span.dataset) {
+            delete span.dataset.invoiceOriginalX;
+          }
+        });
       }
 
       triggerSvgDownload(svgContent, filename) {
@@ -1426,20 +2184,25 @@
       }
 
       getInvoiceFilenameBase() {
-        const rawInvoiceNumber = (this.lastInvoiceMetadata?.invoiceNumber || 'invoice').toString();
-        const sanitizedInvoiceNumber = rawInvoiceNumber.replace(/\s+/g, '_').replace(/[^\w.-]/g, '');
-        const invoiceDate = this.lastInvoiceMetadata?.invoiceDate instanceof Date
-          ? this.formatDateForFilename(this.lastInvoiceMetadata.invoiceDate)
-          : null;
-        const baseName = sanitizedInvoiceNumber.length > 0 ? sanitizedInvoiceNumber : 'invoice';
-        return invoiceDate ? `${baseName}-${invoiceDate}` : `${baseName}`;
+        const businessName = this.sanitizeFilenameComponent(this.lastInvoiceMetadata?.myBusinessName || '');
+        const invoiceNumber = this.sanitizeFilenameComponent(this.lastInvoiceMetadata?.invoiceNumber || 'invoice');
+        const clientInvoiceNumber = this.sanitizeFilenameComponent(this.lastInvoiceMetadata?.clientInvoiceNumber || '');
+        const businessSegment = businessName.length > 0 ? businessName : 'invoice';
+        const invoiceSegment = invoiceNumber.length > 0 ? invoiceNumber : 'invoice';
+        const combined = clientInvoiceNumber.length > 0
+          ? `${businessSegment} Invoice ${clientInvoiceNumber} } ${invoiceSegment}`
+          : `${businessSegment} Invoice ${invoiceSegment}`;
+        return combined.replace(/\s{2,}/g, ' ').trim();
       }
 
-      formatDateForFilename(date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+      sanitizeFilenameComponent(value) {
+        if(value == null) {
+          return '';
+        }
+        const stringValue = value.toString().replace(/[\u0000-\u001F\u007F]/g, '');
+        const collapsedWhitespace = stringValue.replace(/\s+/g, ' ').trim();
+        const sanitized = collapsedWhitespace.replace(/[<>:"/\\|?*]/g, '');
+        return sanitized;
       }
 
       registerPdfFonts(doc) {
@@ -1554,6 +2317,16 @@
             ? element.closest('text')
             : null;
         if(targetTextElement && typeof targetTextElement.setAttribute === 'function') {
+          const existingStored = targetTextElement.dataset?.invoiceOriginalX;
+          if(!existingStored) {
+            const textOriginalXAttr = targetTextElement.getAttribute('x');
+            const parsed = typeof textOriginalXAttr === 'string' && textOriginalXAttr.length > 0
+              ? parseFloat(textOriginalXAttr)
+              : Number.NaN;
+            if(Number.isFinite(parsed)) {
+              targetTextElement.dataset.invoiceOriginalX = parsed;
+            }
+          }
           targetTextElement.setAttribute('text-anchor', 'end');
           this.ensureTextAnchorStyle(targetTextElement);
         }
@@ -1576,6 +2349,9 @@
             const targetX = this.computeRightAlignedTargetX(elementId, originalX);
             span.setAttribute('x', targetX.toFixed(3));
             if(targetTextElement && typeof targetTextElement.setAttribute === 'function') {
+              if(!targetTextElement.dataset?.invoiceOriginalX) {
+                targetTextElement.dataset.invoiceOriginalX = originalX;
+              }
               targetTextElement.setAttribute('x', targetX.toFixed(3));
             }
           }
@@ -1620,6 +2396,25 @@
           const normalizedStyle = existingStyle.trim().replace(/;$/, '');
           const suffix = normalizedStyle.length > 0 ? `${normalizedStyle}; text-anchor: end` : 'text-anchor: end';
           node.setAttribute('style', suffix);
+        }
+      }
+
+      clearTextAnchorStyle(node) {
+        if(!node || typeof node.removeAttribute !== 'function' || typeof node.getAttribute !== 'function') {
+          return;
+        }
+        node.removeAttribute('text-anchor');
+        const style = node.getAttribute('style');
+        if(style) {
+          const filtered = style
+            .split(';')
+            .map((declaration) => declaration.trim())
+            .filter((declaration) => declaration.length > 0 && !declaration.toLowerCase().startsWith('text-anchor'));
+          if(filtered.length > 0) {
+            node.setAttribute('style', filtered.join('; '));
+          } else {
+            node.removeAttribute('style');
+          }
         }
       }
     }

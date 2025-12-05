@@ -26,10 +26,7 @@
 </g>
 <g id="contactPersonContainer">
 <text id="Contact person" fill="#5E6470" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="32" y="260.636">Contact person</tspan></text>
-<g id="contactPersonValue">
-<text fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="600" letter-spacing="0em"><tspan x="32" y="278.636">Andrea Flemming&#10;</tspan></text>
-<text fill="#5E6470" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" letter-spacing="0em"><tspan x="32" y="292.636">andflemming@gmail.com</tspan></text>
-</g>
+<text id="contactPersonValue" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="600" letter-spacing="0em"><tspan x="32" y="278.636">Andrea Flemming</tspan><tspan x="32" y="292.636">andflemming@gmail.com</tspan></text>
 </g>
 <g id="dueDateContainer">
 <text id="Due date" fill="#5E6470" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="519.836" y="260.636">Due date</tspan></text>
@@ -38,11 +35,7 @@
 </g>
 <g id="billedToContainer">
 <text id="Billed to" fill="#5E6470" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="32" y="148.636">Billed to</tspan></text>
-<g id="billedToValue">
-<text id="Fredericton Botanic Garden" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="600" letter-spacing="0em"><tspan x="32" y="166.636">Fredericton Botanic Garden</tspan></text>
-<text id="10 Cameron Court Fredericton, NB, Canada" fill="#5E6470" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" letter-spacing="0em"><tspan x="32" y="182.636">10 Cameron Court&#10;</tspan><tspan x="32" y="196.636">Fredericton, NB, Canada</tspan></text>
-<text id="(506) 452-9269" fill="#5E6470" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" letter-spacing="0em"><tspan x="32" y="212.636">(506) 452-9269</tspan></text>
-</g>
+<text id="billedToValue" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="600" letter-spacing="0em"><tspan x="32" y="166.636">Fredericton Botanic Garden</tspan><tspan x="32" y="182.636">10 Cameron Court</tspan><tspan x="32" y="196.636">Fredericton, NB, Canada</tspan><tspan x="32" y="210.636">(506) 452-9269</tspan></text>
 </g>
 <g id="Headers">
 <text id="HOURS" fill="#5E6470" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="8" font-weight="500" letter-spacing="0.04em"><tspan x="386" y="322.909">HOURS</tspan></text>
@@ -74,7 +67,7 @@
 </g>
 </g>
 </g>
-<g id="pageWithTotals_2">
+<g id="pageWithTotals_2" transform="translate(0 14)">
 <path id="Vector 147" d="M323 693L563 693" stroke="#D7DAE0" stroke-width="0.5"/>
 <text id="totalHoursValue" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="537.658" y="625.636">10</tspan></text>
 <text id="subtotalValue" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="500" letter-spacing="0em"><tspan x="537.658" y="651.636">$280</tspan></text>
@@ -88,7 +81,7 @@
 </g>
 </g>
 <g id="myAddressContainer">
-<text id="myAddressValue" fill="#5E6470" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" letter-spacing="0em"><tspan x="475.5" y="65.6364">168 Victoria Street&#10;</tspan><tspan x="522.551" y="79.6364">E3B 1W1&#10;</tspan><tspan x="447.209" y="93.6364">Fredericton, NB, Canada</tspan></text>
+<text id="myAddressValue" fill="#5E6470" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" letter-spacing="0em"><tspan x="475.5" y="65.6364">168 Victoria Street</tspan><tspan x="475.5" y="79.6364">E3B 1W1</tspan><tspan x="475.5" y="93.6364">Fredericton, NB, Canada</tspan></text>
 </g>
 <text id="howToPayValue" fill="#1A1C21" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="10" font-weight="bold" letter-spacing="0em"><tspan x="32" y="814.636">Please send payment via e-transfer to nathanielc.brewer@gmail.com</tspan></text>
 <g id="myNameAndContactInfoContaner">
