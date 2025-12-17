@@ -1664,6 +1664,9 @@
           Failed to parse SVG template. ${parserError.textContent}`);
         }
         const svgElement = doc.documentElement;
+        const headersElement = doc.getElementById('Headers') || doc.getElementById('headersContainer');
+        const rowsContainer = doc.getElementById('Rows') || doc.getElementById('rowsContainer');
+        const hasRows = Array.isArray(rows) && rows.length > 0;
         this.setTextContent(doc, 'pageValue', `Page ${pageNumber} of ${totalPages}`);
         this.setTextContent(doc, 'invoiceNumberValue', invoiceNumber);
         this.setTextContent(doc, 'clientInvoiceNumberContainerValue', clientInvoiceNumber || '');
@@ -1705,7 +1708,12 @@
           this.setTextContent(doc, 'contactPersonValue', contactText);
         }
         this.applyAccentColor(doc, accentColor);
-        this.populateRows(doc, rows);
+        if(includeTotals && !hasRows) {
+          this.hideSvgElement(headersElement);
+          this.hideSvgElement(rowsContainer);
+        } else {
+          this.populateRows(doc, rows);
+        }
         this.prefixIds(svgElement, `invoicePage${pageNumber}`);
         return document.importNode(svgElement, true);
       }
@@ -2356,6 +2364,13 @@
             }
           }
         });
+      }
+
+      hideSvgElement(element) {
+        if(!element) {
+          return;
+        }
+        element.setAttribute('display', 'none');
       }
 
       computeRightAlignedTargetX(elementId, originalX) {
