@@ -10,6 +10,11 @@ The interface looks like this:
 And the output looks like this:
 ![Results screenshot](/assets/images/results.png)   
 
+### Key features
+- Time tracking: choose any calendar and date range to get totals and per-event detail (events marked "not billable" or "don't track" are skipped).
+- Remembered inputs: optional toggles save your calendar selection, date range, and invoice fields locally for the next visit.
+- Invoice Builder: turn a run into a branded invoice (with your business/client info, hourly rate, tax, accent colour, auto 14-day due date), then download as a PDF or per-page SVG. Multi-page invoices are handled automatically.
+
 ### Example usage
 
 - Create a calendar for a project you're starting
@@ -18,10 +23,16 @@ And the output looks like this:
     - Give it a descriptive title like "Initial project configuration"
     - Set the duration to the amount of time you spent
 - Use the Google Calendar Time Tracker weekly to review your time spent on the project
+- Generate an invoice from the tracked period and send it to a client
+
+### Invoice Builder workflow
+- Run the time tracker for the calendar and dates you want to invoice (this enables the Invoice Builder).
+- Fill in invoice details (IDs, hourly rate, tax), your business info, client info, contact, payment notes, and pick an accent colour.
+- Click **Generate invoice** to preview; use **Download PDF** or **Download SVG** to export. Check "Remember invoice inputs" to reuse the same details next time (stored only in your browser).
 
 ### Only number of users and executions data are collected
 
-This web app collects no information about users or their Google accounts. You can verify this by inspecting the source code in `/src/code.js`.      
+This web app collects no information about users or their Google accounts. Preferences you choose to "remember" are saved only in your browser's local storage. You can verify this by inspecting the source code in `/src/code.js`.      
 
 ### Try it out
 
