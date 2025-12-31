@@ -4,6 +4,22 @@
   <base target="_top">
   <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
   <style>
+    @font-face {
+      font-family: 'Ubuntu';
+      src: url('data:font/ttf;base64,INLINE_FONT_UBUNTU_REGULAR') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'Ubuntu';
+      src: url('data:font/ttf;base64,INLINE_FONT_UBUNTU_BOLD') format('truetype');
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+
     table {
       border-collapse: collapse;
       border: var(--border-style);
@@ -2275,7 +2291,7 @@
             if(!property) return null;
             if(property.toLowerCase() === 'font-family') {
               hasFontFamily = true;
-              return 'font-family: Helvetica';
+              return `font-family: ${defaultFont}`;
             }
             if(property.toLowerCase() === 'font-weight') {
               hasFontWeight = true;
