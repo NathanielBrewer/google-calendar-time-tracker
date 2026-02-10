@@ -39,6 +39,13 @@ This web app collects no information about users or their Google accounts. Prefe
 Access the latest version of the Google Calendar Time Tracker [here](1-n20wIm5xcJuWcTAHmHBMyWotAZxCUS-hC-0yKcsM7U5Lz9sgvVZL8zI).   
 Since this web app is not published through Google, you will need to click through the security warnings.
 
+### Production auth behavior (important)
+
+- This app is deployed with `executeAs: USER_ACCESSING` and uses `https://www.googleapis.com/auth/calendar.readonly`.
+- Because the app reads each user's own calendars, first-time OAuth consent is required for each user and cannot be removed by creating a new release/deployment.
+- Share the Web App `.../exec` URL from a deployment, not the Script ID or editor URL. Sharing the wrong URL will cause users to request project access.
+- If you need zero user consent, you must deploy as `USER_DEPLOYING` (`executeAs: ME`) and read only the deployer's calendars (not each user's calendars).
+
 ## Installation and commands
 
 1. **Clone the repository** 

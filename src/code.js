@@ -166,16 +166,6 @@ function arrayOfObjectsToCSV(arr) {
   .replace(/(^\[)|(\]$)/mg, '');
 }
 
-function client_getOAuthToken() {
-  try {
-    return ScriptApp.getOAuthToken();
-  } catch (e) {
-    throw new Error(`#getOAuthToken()
-      authorization error Failed with error: ${JSON.stringify(e)}
-    `);
-  }
-}
-
 function doGet(event) {
   return HtmlService.createHtmlOutputFromFile('index.html')
   .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)

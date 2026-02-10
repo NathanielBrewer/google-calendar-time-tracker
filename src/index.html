@@ -453,23 +453,6 @@
       }
     }
 
-    google.script.run
-      .withSuccessHandler(function(token) {
-        if(token == 'Access Denied') {
-          alert("You do not have the necessary Google permissions.");
-        } else {
-          _accessToken = token;
-          onAuthSuccess();
-        }
-      })
-      .withFailureHandler(function(error) {
-        onSuccess(error);
-        console.error(`#google.script.run.getOAuthToken()
-        Error: ${JSON.stringify(error)}`);
-      })
-      .client_getOAuthToken();
-
-    let _accessToken = null;
     let _calendarOptions;
     const LOCAL_STORAGE_APP_PREFIX = 'gctt_';
     const CALENDAR_STORAGE_KEY = `${LOCAL_STORAGE_APP_PREFIX}calendarInfo`;
@@ -540,6 +523,7 @@
     // If it is in an iFrame, the container cannot register for events within the iFrame so let it know there was a click event
     // For example, this is used by ncbrewer.ca to inform it that there was a click outside of the mobile navigation menu so the menu will close
     document.addEventListener('click', (event) => appPostMessage('click event'));
+    onAuthSuccess();
 
     // TODO: finish
     function setupRememberDates() {
