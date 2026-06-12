@@ -220,7 +220,7 @@
 </head>
 
 <body>
-  <main>
+  <main id="appRoot">
     <div class="header-container">
       <h1>
         Google Calendar Time Tracker
@@ -509,20 +509,102 @@
     ];
     let _invoiceBuilderController = null;
 
+    const APP_MESSAGE_SOURCE = 'google-calendar-time-tracker';
     const _dtu_dateTimeUtils = new DateTimeUtils();
-    function appPostMessage(message) {
+    function appPostMessage(message, options = {}) {
+      const { legacyMessage = null } = options;
       try {
-        window.parent.parent.parent.postMessage(message, '*');
+        const targetWindow = window.parent.parent.parent;
+        if(typeof legacyMessage === 'string' && legacyMessage.length > 0) {
+          targetWindow.postMessage(legacyMessage, '*');
+        }
+        targetWindow.postMessage(message, '*');
       } catch (error) {
         console.warn(`window.parent.parent.parent.postMessage(message=${message}) failed. This might be because: 1. the Google changed the number of window parents, or 2. This is not running in an iFrame.`);
       }
     }
-    // This may be running in an iFrame. Send a message out of the iFrame so the container knows the user is logged in, otherwise we wouldn't have made it this far
-    appPostMessage('success');
+
+    function getAppRootElement() {
+      return document.getElementById('appRoot') || document.querySelector('main') || document.body;
+    }
+
+    function getAppContainerSize() {
+      const appRootElement = getAppRootElement();
+      if(!appRootElement) {
+        return null;
+      }
+
+      const rect = appRootElement.getBoundingClientRect();
+      return {
+        width: Math.ceil(Math.max(rect.width, appRootElement.scrollWidth, appRootElement.offsetWidth)),
+        height: Math.ceil(Math.max(rect.height, appRootElement.scrollHeight, appRootElement.offsetHeight)),
+      };
+    }
+
+    function buildAppFrameMessage(type, message, reason) {
+      return {
+        source: APP_MESSAGE_SOURCE,
+        type,
+        message,
+        reason,
+        containerSize: getAppContainerSize(),
+      };
+    }
+
+    function postAppStatusMessage(message, reason) {
+      appPostMessage(buildAppFrameMessage('app-status', message, reason), { legacyMessage: message });
+    }
+
+    function reportAppContainerSize(reason) {
+      appPostMessage(buildAppFrameMessage('app-container-size', 'resize', reason));
+    }
+
+    function setupAppContainerSizeReporting() {
+      const appRootElement = getAppRootElement();
+      if(!appRootElement) {
+        return;
+      }
+
+      let lastReportedSize = '';
+      let reportFrameId = 0;
+      const scheduleSizeReport = (reason) => {
+        if(reportFrameId) {
+          window.cancelAnimationFrame(reportFrameId);
+        }
+        reportFrameId = window.requestAnimationFrame(() => {
+          reportFrameId = 0;
+          const containerSize = getAppContainerSize();
+          if(!containerSize) {
+            return;
+          }
+
+          const nextReportedSize = `${containerSize.width}x${containerSize.height}`;
+          if(lastReportedSize === nextReportedSize) {
+            return;
+          }
+
+          lastReportedSize = nextReportedSize;
+          reportAppContainerSize(reason);
+        });
+      };
+
+      if(typeof ResizeObserver === 'function') {
+        const resizeObserver = new ResizeObserver(() => scheduleSizeReport('resize-observer'));
+        resizeObserver.observe(appRootElement);
+      }
+
+      window.addEventListener('load', () => scheduleSizeReport('window-load'));
+      window.addEventListener('resize', () => scheduleSizeReport('window-resize'));
+      scheduleSizeReport('initial-render');
+    }
+
+    // This may be running in an iFrame. Send a message out of the iFrame so the container knows the user is logged in, otherwise we wouldn't have made it this far.
+    postAppStatusMessage('success', 'auth-ready');
+    setupAppContainerSizeReporting();
 
     // If it is in an iFrame, the container cannot register for events within the iFrame so let it know there was a click event
     // For example, this is used by ncbrewer.ca to inform it that there was a click outside of the mobile navigation menu so the menu will close
-    document.addEventListener('click', (event) => appPostMessage('click event'));
+    document.addEventListener('click', () => appPostMessage('click event'));
     onAuthSuccess();
 
     // TODO: finish
