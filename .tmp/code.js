@@ -8,6 +8,13 @@ function getFormatedDateTime(date) {
     return `${date.toLocaleDateString('en-US', dateFormatOptions)}, ${getFormatedTime(date)}`;
 }
 ;
+function logExecutionInfo(eventName, details) {
+    console.info(JSON.stringify({
+        app: 'google-calendar-time-tracker',
+        event: eventName,
+        details: details || {},
+    }));
+}
 function getFormatedTime(date) {
     const timeFormatOptions = {
         timeStyle: 'short',
@@ -37,16 +44,6 @@ function createAppEventsSummary(dateRange, appEvents, calendarName) {
         ${this.appEvents.map((appEvent) => appEvent.print()).join("\n")}`;
         },
         getData: function () {
-            const data = {
-                calendarName: calendarName,
-                start: this.range.start,
-                end: this.range.end,
-                numEvents: this.appEvents.length,
-                totalHours: this.hours(),
-            };
-            console.log(`#createAppEventsSummary.getData()
-        data=${JSON.stringify(data)}
-        `);
             return {
                 calendarName: calendarName,
                 start: this.range.start,
@@ -94,35 +91,58 @@ function getCalendarEventsForRanges(calendar, dateRanges) {
     }).flat();
 }
 function client_computeResults(calendarId, dateRange) {
-    console.warn(`#client_computeResutls(calendarId=${calendarId}, dateRange=${JSON.stringify(dateRange)})`);
-    const calendar = CalendarApp.getCalendarById(calendarId);
-    if (!calendar) {
-        throw new Error(`#Error in client_computeResults(calendarId=${calendarId}, dateRange=${JSON.stringify(dateRange)})
-      Calendar not found error
-    `);
+    logExecutionInfo('compute_results_started');
+    try {
+        const calendar = CalendarApp.getCalendarById(calendarId);
+        if (!calendar) {
+            logExecutionInfo('calendar_lookup_completed', {
+                successful: false,
+            });
+            throw new Error('Calendar not found.');
+        }
+        logExecutionInfo('calendar_lookup_completed', {
+            successful: true,
+        });
+        const interval = hoursToMs(24);
+        const dateRanges = getRangesForInterval(dateRange, interval);
+        let calendarEventsForRanges = [];
+        try {
+            calendarEventsForRanges = getCalendarEventsForRanges(calendar, dateRanges);
+        }
+        catch (error) {
+            logExecutionInfo('calendar_events_gathered', {
+                successful: false,
+            });
+            throw error;
+        }
+        logExecutionInfo('calendar_events_gathered', {
+            successful: true,
+            hasTrackableEvents: calendarEventsForRanges.length > 0,
+        });
+        const appEvents = calendarEventsForRanges.map((calendarEvent) => createAppEvent(calendarEvent));
+        const appEventsSummary = createAppEventsSummary(dateRange, appEvents, calendar.getName());
+        let eventsData = [];
+        appEvents.forEach((appEvent) => {
+            eventsData.push(appEvent.getData());
+        });
+        const data = {
+            summaryData: appEventsSummary.getData(),
+            eventsData: eventsData,
+        };
+        logExecutionInfo('compute_results_completed', {
+            successful: true,
+            hasResults: appEvents.length > 0,
+        });
+        return data;
     }
-    console.log(`#client_computeResults(calendarId=${calendarId}, dateRange=${JSON.stringify(dateRange)})
-  `);
-    const interval = hoursToMs(24);
-    const dateRanges = getRangesForInterval(dateRange, interval);
-    const calendarEventsForRanges = getCalendarEventsForRanges(calendar, dateRanges);
-    const appEvents = calendarEventsForRanges.map((calendarEvent) => createAppEvent(calendarEvent));
-    const appEventsSummary = createAppEventsSummary(dateRange, appEvents, calendar.getName());
-    let eventsData = [];
-    appEvents.forEach((appEvent) => {
-        eventsData.push(appEvent.getData());
-    });
-    const data = {
-        summaryData: appEventsSummary.getData(),
-        eventsData: eventsData,
-    };
-    console.log(`#client_computeResults
-  data.length=${Object.keys(data).length}, appEvents.length=${appEvents.length})}
-  `);
-    return data;
+    catch (error) {
+        logExecutionInfo('compute_results_completed', {
+            successful: false,
+        });
+        throw new Error('Unable to compute results.');
+    }
 }
 function getRangesForInterval(dateRange, interval) {
-    console.log(`getRangesForInterval(dateRange: ${JSON.stringify(dateRange)}, interval: ${interval})`);
     const ONE_SECOND = 1000;
     const ranges = [];
     let currentTime = dateRange.start;
@@ -156,22 +176,68 @@ function arrayOfObjectsToCSV(arr) {
         .replace(/(^\[)|(\]$)/mg, '');
 }
 function doGet(event) {
+    logExecutionInfo('web_app_loaded');
     return HtmlService.createHtmlOutputFromFile('index.html')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 async function client_getSetupData() {
-    return {
-        calendars: CalendarApp.getAllCalendars().map((calendar) => {
-            return {
-                name: calendar.getName(),
-                id: calendar.getId()
-            };
-        }),
+    logExecutionInfo('setup_data_requested');
+    try {
+        const calendars = CalendarApp.getAllCalendars();
+        logExecutionInfo('calendars_gathered', {
+            successful: true,
+            hasCalendars: calendars.length > 0,
+        });
+        return {
+            calendars: calendars.map((calendar) => {
+                return {
+                    name: calendar.getName(),
+                    id: calendar.getId()
+                };
+            }),
+        };
+    }
+    catch (error) {
+        logExecutionInfo('calendars_gathered', {
+            successful: false,
+        });
+        throw new Error('Unable to load calendars.');
+    }
+}
+function client_logInvoiceEvent(eventName, status) {
+    const allowedEvents = {
+        invoice_generated: true,
+        invoice_pdf_downloaded: true,
+        invoice_svg_downloaded: true,
     };
+    const allowedStatuses = {
+        success: true,
+        failure: true,
+    };
+    if (!allowedEvents[eventName] || !allowedStatuses[status]) {
+        logExecutionInfo('invoice_activity_log_rejected');
+        return;
+    }
+    logExecutionInfo(eventName, {
+        successful: status === 'success',
+    });
 }
 function client_getInvoiceTemplates() {
-    return {
-        pageWithTotals: HtmlService.createHtmlOutputFromFile('invoice-builder/pageWithTotals').getContent(),
-        pageWithoutTotals: HtmlService.createHtmlOutputFromFile('invoice-builder/pageWithoutTotals').getContent(),
-    };
+    logExecutionInfo('invoice_templates_requested');
+    try {
+        const templates = {
+            pageWithTotals: HtmlService.createHtmlOutputFromFile('invoice-builder/pageWithTotals').getContent(),
+            pageWithoutTotals: HtmlService.createHtmlOutputFromFile('invoice-builder/pageWithoutTotals').getContent(),
+        };
+        logExecutionInfo('invoice_templates_loaded', {
+            successful: true,
+        });
+        return templates;
+    }
+    catch (error) {
+        logExecutionInfo('invoice_templates_loaded', {
+            successful: false,
+        });
+        throw new Error('Unable to load invoice templates.');
+    }
 }

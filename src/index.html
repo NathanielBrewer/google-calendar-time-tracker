@@ -972,6 +972,14 @@
       return headers;
     }
 
+    function logInvoiceActivity(eventName, status) {
+      try {
+        google.script.run
+          .withFailureHandler(function() {})
+          .client_logInvoiceEvent(eventName, status);
+      } catch (error) {}
+    }
+
     async function run() {
       try {
         google.script.run
@@ -1384,15 +1392,18 @@
       async handleFormSubmit(event) {
         event.preventDefault();
         if(!this.resultsData || !Array.isArray(this.resultsData.eventsData) || this.resultsData.eventsData.length === 0) {
+          logInvoiceActivity('invoice_generated', 'failure');
           return;
         }
         const form = event.target;
         if(form instanceof HTMLFormElement && !form.reportValidity()) {
+          logInvoiceActivity('invoice_generated', 'failure');
           return;
         }
         const formData = new FormData(form);
         const parsed = this.parseInvoiceForm(formData);
         if(parsed.errors.length > 0) {
+          logInvoiceActivity('invoice_generated', 'failure');
           this.presentInvoiceErrors(parsed.errors);
           return;
         }
@@ -1460,7 +1471,9 @@
           };
           this.renderPages(pages);
           this.persistInvoiceDetailsIfNeeded();
+          logInvoiceActivity('invoice_generated', 'success');
         } catch (error) {
+          logInvoiceActivity('invoice_generated', 'failure');
           console.error('#InvoiceBuilderController.handleFormSubmit()', error);
           presentError('Unable to generate the invoice. Please try again.');
         }
@@ -2025,7 +2038,9 @@
         }
         try {
           await this.downloadInvoicePdf();
+          logInvoiceActivity('invoice_pdf_downloaded', 'success');
         } catch (error) {
+          logInvoiceActivity('invoice_pdf_downloaded', 'failure');
           console.error('#InvoiceBuilderController.downloadInvoicePdf()', error);
           presentError('Unable to download the invoice PDF. Please try again.');
         } finally {
@@ -2045,7 +2060,9 @@
         }
         try {
           await this.downloadInvoiceSvg();
+          logInvoiceActivity('invoice_svg_downloaded', 'success');
         } catch (error) {
+          logInvoiceActivity('invoice_svg_downloaded', 'failure');
           console.error('#InvoiceBuilderController.downloadInvoiceSvg()', error);
           presentError('Unable to download the invoice SVG files. Please try again.');
         } finally {
