@@ -1,4 +1,4 @@
-# Google Calendar Time Tracker
+# NCBrewer Calendar Event Tracker
 
 ## Description
 
@@ -22,7 +22,7 @@ And the output looks like this:
     - Create a project calendar event
     - Give it a descriptive title like "Initial project configuration"
     - Set the duration to the amount of time you spent
-- Use the Google Calendar Time Tracker weekly to review your time spent on the project
+- Use the NCBrewer Calendar Event Tracker weekly to review your time spent on the project
 - Generate an invoice from the tracked period and send it to a client
 
 ### Invoice Builder workflow
@@ -30,14 +30,13 @@ And the output looks like this:
 - Fill in invoice details (IDs, hourly rate, tax), your business info, client info, contact, payment notes, and pick an accent colour.
 - Click **Generate invoice** to preview; use **Download PDF** or **Download SVG** to export. Check "Remember invoice inputs" to reuse the same details next time (stored only in your browser).
 
-### Only number of users and executions data are collected
+### Privacy and Google verification
 
-This web app collects no information about users or their Google accounts. Preferences you choose to "remember" are saved only in your browser's local storage. You can verify this by inspecting the source code in `/src/code.js`.      
+Calendar data is processed by Google Apps Script and returned to the user's browser to summarize time. Invoice fields and exports are processed in the browser. Optional remembered inputs persist in browser storage. Operational logs record activity and success/failure indicators; Google supplies execution metadata. The surrounding website uses Google Analytics. See the [Privacy Policy](https://www.ncbrewer.ca/time-tracker/privacy) and [Terms of Service](https://www.ncbrewer.ca/time-tracker/terms) once the prepared website changes are published.
 
-### Try it out
+Use the [Time Tracker homepage](https://www.ncbrewer.ca/time-tracker) to open the app. Removing Google's unverified-app warning requires OAuth verification; publishing these policy pages alone does not remove it. Normal user consent remains necessary after verification.
 
-Access the latest version of the Google Calendar Time Tracker [here](1-n20wIm5xcJuWcTAHmHBMyWotAZxCUS-hC-0yKcsM7U5Lz9sgvVZL8zI).   
-Since this web app is not published through Google, you will need to click through the security warnings.
+The [verification checklist](docs/google-oauth-verification.md) contains the console values, scope justification, demo recording outline, deployment checks, and account-owner steps. Website pages are prepared in `/home/nathaniel/dev/website`; they are not published by building this repository.
 
 ### Production auth behavior (important)
 

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <head>
-  <title>Google Calendar Time Tacker</title>
+  <title>NCBrewer Calendar Event Tracker</title>
   <base target="_top">
   <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
   <style>
@@ -223,9 +223,9 @@
   <main id="appRoot">
     <div class="header-container">
       <h1>
-        Google Calendar Time Tracker
+        NCBrewer Calendar Event Tracker
       </h1>
-      <div title="Welcome to the Google Calendar Time Tracker!&#10;&#10; A quick and easy tool that calculates your time spent on events for any of your Google calendars.&#10;&#10;To track time for a Google calendar:&#10;&nbsp;&nbsp;&#8226; Create events for the calendar&#10;&nbsp;&nbsp;&#8226; Give events descriptive titles like &quot;Setting up time tracking&quot;&#10;&nbsp;&nbsp;&#8226; Use the Google Calendar Time Tracker weekly to get total and event-by-event hours" class="info-circle blue">i</div>
+      <div title="Welcome to the NCBrewer Calendar Event Tracker!&#10;&#10; A quick and easy tool that calculates your time spent on events for any of your Google calendars.&#10;&#10;To track time for a Google calendar:&#10;&nbsp;&nbsp;&#8226; Create events for the calendar&#10;&nbsp;&nbsp;&#8226; Give events descriptive titles like &quot;Setting up time tracking&quot;&#10;&nbsp;&nbsp;&#8226; Use the NCBrewer Calendar Event Tracker weekly to get total and event-by-event hours" class="info-circle blue">i</div>
     </div>
     <form name="appForm" id="appForm">
       <fieldset>
@@ -374,6 +374,13 @@
       <p id="progressText">Loading</p>
       <p id="progressAmount"></p>
     </div>
+    <footer style="margin-top: 2rem; padding: 1rem 0;">
+      <nav aria-label="Time Tracker policies">
+        <a href="https://www.ncbrewer.ca/time-tracker/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+        · <a href="https://www.ncbrewer.ca/time-tracker/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+        · <a href="mailto:nathaniel@ncbrewer.ca" target="_blank" rel="noopener noreferrer">Support</a>
+      </nav>
+    </footer>
   </main>
   <!-- INLINE_JSPDF -->
   <!-- INLINE_SVG2PDF -->
@@ -2298,7 +2305,7 @@
         const businessSegment = businessName.length > 0 ? businessName : 'invoice';
         const invoiceSegment = invoiceNumber.length > 0 ? invoiceNumber : 'invoice';
         const combined = clientInvoiceNumber.length > 0
-          ? `${businessSegment} Invoice ${clientInvoiceNumber} } ${invoiceSegment}`
+          ? `${businessSegment} Invoice ${clientInvoiceNumber} ${invoiceSegment}`
           : `${businessSegment} Invoice ${invoiceSegment}`;
         return combined.replace(/\s{2,}/g, ' ').trim();
       }

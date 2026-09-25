@@ -1,7 +1,7 @@
 {
   "name": "google-calendar-time-tracker",
   "version": "1.1.0",
-  "description": "Google Calendar Time Tracker summarizes the events for date range.",
+  "description": "NCBrewer Calendar Event Tracker summarizes the events for date range.",
   "main": "code.js",
   "scripts": {
     "compile": "node ./scripts/compile.js",
@@ -33,7 +33,7 @@
   "bugs": {
     "url": ""
   },
-  "homepage": "https:/www.ncbrewer.ca/time-tracker#readme",
+  "homepage": "https://www.ncbrewer.ca/time-tracker",
   "devDependencies": {
     "@google/clasp": "^3.0.6-alpha",
     "@rollup/plugin-commonjs": "^28.0.6",
